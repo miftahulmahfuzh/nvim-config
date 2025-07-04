@@ -1,5 +1,6 @@
+-- /home/devmiftahul/.config/nvim/lua/mappings.lua
+
 local keymap = vim.keymap
-local uv = vim.uv
 
 -- Save key strokes (now we do not need to press shift to enter command mode).
 keymap.set({ "n", "x" }, ";", ":")

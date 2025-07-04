@@ -1,18 +1,34 @@
--- /home/devmiftahul/.config/nvim/lua/config/lsp.lua
+-- Enhanced LSP configuration to prevent attachment to fugitive buffers
 
 local utils = require("utils")
 
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("lsp_buf_conf", { clear = true }),
   callback = function(event_context)
+    local bufnr = event_context.buf
     local client = vim.lsp.get_client_by_id(event_context.data.client_id)
-    -- vim.print(client.name, client.server_capabilities)
+
+    -- Get buffer URI and filetype
+    local buf_uri = vim.uri_from_bufnr(bufnr)
+    local filetype = vim.bo[bufnr].filetype
+
+    -- Prevent LSP from attaching to fugitive buffers and other special buffers
+    if filetype == 'fugitive' or 
+       filetype == 'git' or 
+       filetype == 'gitcommit' or 
+       filetype == 'gitrebase' or
+       (buf_uri and not buf_uri:match("^file://")) then
+      if client then
+        -- Detach the client from this buffer to stop any further communication
+        vim.lsp.buf_detach_client(bufnr, client.id)
+        vim.notify(string.format("Detached %s from %s buffer", client.name, filetype), vim.log.levels.DEBUG)
+      end
+      return
+    end
 
     if not client then
       return
     end
-
-    local bufnr = event_context.buf
 
     -- Mappings.
     local map = function(mode, l, r, opts)
@@ -106,6 +122,23 @@ vim.api.nvim_create_autocmd("LspAttach", {
   end,
   nested = true,
   desc = "Configure buffer keymap and behavior based on LSP",
+})
+
+-- Additional autocmd to prevent LSP from attaching to fugitive buffers in the first place
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "fugitive", "git", "gitcommit", "gitrebase" },
+  callback = function(event)
+    local bufnr = event.buf
+    -- Get all attached clients and detach them
+    local clients = vim.lsp.get_clients({ bufnr = bufnr })
+    for _, client in ipairs(clients) do
+      vim.lsp.buf_detach_client(bufnr, client.id)
+    end
+    
+    -- Disable LSP for this buffer
+    vim.b[bufnr].lsp_enabled = false
+  end,
+  desc = "Disable LSP for git-related buffers",
 })
 
 -- Enable lsp servers when they are available
