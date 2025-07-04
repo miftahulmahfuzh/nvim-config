@@ -319,8 +319,6 @@ local plugin_specs = {
   -- Repeat vim motions
   { "tpope/vim-repeat", event = "VeryLazy" },
 
-  { "nvim-zh/better-escape.vim", enabled = false, event = { "InsertEnter" } },
-
   {
     "lyokha/vim-xkbswitch",
     enabled = function()

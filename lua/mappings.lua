@@ -315,34 +315,5 @@ keymap.set("c", "<C-A>", "<HOME>")
 -- Delete the character to the right of the cursor
 keymap.set("i", "<C-D>", "<DEL>")
 
-keymap.set("n", "<leader>cb", function()
-  local cnt = 0
-  local blink_times = 7
-  local timer = uv.new_timer()
-  if timer == nil then
-    return
-  end
-
-  timer:start(
-    0,
-    100,
-    vim.schedule_wrap(function()
-      vim.cmd([[
-      set cursorcolumn!
-      set cursorline!
-    ]])
-
-      if cnt == blink_times then
-        timer:close()
-      end
-
-      cnt = cnt + 1
-    end)
-  )
-end, { desc = "show cursor" })
-
 -- Exit insert mode and save with jk
 keymap.set("i", "jk", "<Esc>:write<CR>", { silent = true, desc = "exit insert mode and save" })
-
--- Disable better-escape.vim's default jk mapping to avoid conflicts
-vim.g.better_escape_shortcut = ''  -- Remove default jk/jj mappings
