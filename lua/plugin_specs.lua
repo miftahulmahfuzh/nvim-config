@@ -1,3 +1,5 @@
+-- /home/devmiftahul/.config/nvim/lua/plugin_specs.lua
+
 local utils = require("utils")
 
 local plugin_dir = vim.fn.stdpath("data") .. "/lazy"
@@ -146,16 +148,16 @@ local plugin_specs = {
     branch = "v2",
   },
   { "rebelot/kanagawa.nvim", lazy = true },
-  { "miikanissi/modus-themes.nvim", priority = 1000 },
-  { "wtfox/jellybeans.nvim", priority = 1000 },
-  { "projekt0n/github-nvim-theme", name = "github-theme" },
-  { "e-ink-colorscheme/e-ink.nvim", priority = 1000 },
-  { "ficcdaf/ashen.nvim", priority = 1000 },
-  { "savq/melange-nvim", priority = 1000 },
-  { "Skardyy/makurai-nvim", priority = 1000 },
-  { "vague2k/vague.nvim", priority = 1000 },
-  { "webhooked/kanso.nvim", priority = 1000 },
-  { "zootedb0t/citruszest.nvim", priority = 1000 },
+  { "miikanissi/modus-themes.nvim", lazy = true},
+  { "wtfox/jellybeans.nvim", lazy = true},
+  { "projekt0n/github-nvim-theme", name = "github-theme", lazy = true},
+  { "e-ink-colorscheme/e-ink.nvim", lazy = true},
+  { "ficcdaf/ashen.nvim", lazy = true},
+  { "savq/melange-nvim", lazy = true},
+  { "Skardyy/makurai-nvim", lazy = true},
+  { "vague2k/vague.nvim", lazy = true},
+  { "webhooked/kanso.nvim", lazy = true},
+  { "zootedb0t/citruszest.nvim", lazy = true},
 
   -- plugins to provide nerdfont icons
   {
@@ -317,7 +319,7 @@ local plugin_specs = {
   -- Repeat vim motions
   { "tpope/vim-repeat", event = "VeryLazy" },
 
-  { "nvim-zh/better-escape.vim", event = { "InsertEnter" } },
+  { "nvim-zh/better-escape.vim", enabled = false, event = { "InsertEnter" } },
 
   {
     "lyokha/vim-xkbswitch",
@@ -599,6 +601,74 @@ local plugin_specs = {
     event = "BufReadPre",
     opts = { -- set to setup table
     },
+  },
+
+  -- Personal addition
+  {
+    "williamboman/mason.nvim",
+    cmd = "Mason",
+    config = function()
+      require("mason").setup()
+      -- Ensure gofumpt is installed
+      require("mason-registry").get_package("gofumpt"):install()
+    end,
+  },
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    dependencies = { "williamboman/mason.nvim" },
+    config = function()
+      require("mason-tool-installer").setup({
+        ensure_installed = {
+          "gofumpt", -- Add gofumpt here
+        },
+        auto_update = true,
+        run_on_start = true,
+      })
+    end,
+  },
+  {
+    "williamboman/mason-lspconfig.nvim",
+    -- This plugin makes sure that your lspconfig is aware of servers installed with mason
+    dependencies = { "williamboman/mason.nvim", "neovim/nvim-lspconfig" },
+    config = function()
+      require("mason-lspconfig").setup({
+        -- A list of servers to automatically install if they're not already installed
+        ensure_installed = { "lua_ls", "yamlls", "bashls", },
+      })
+    end,
+  },
+  -- Go development
+  {
+    "ray-x/go.nvim",
+    dependencies = { -- Dependencies are optional, but recommended
+      "ray-x/guihua.lua",
+      "neovim/nvim-lspconfig",
+      "nvim-treesitter/nvim-treesitter",
+    },
+    config = function()
+      require("go").setup({
+        diag_signs = false,
+        diag_virtual_text = false,
+        diag_underline = false,
+        gofmt = "gofumpt", -- Use gofumpt for formatting
+        run_in_floaterm = false, -- Optional: Run commands in a floating terminal
+      })
+      -- Set up autocommand to format and save Go files
+      vim.api.nvim_create_autocmd("BufWritePre", {
+        group = vim.api.nvim_create_augroup("go_format_on_save", { clear = true }),
+        pattern = { "*.go" },
+        callback = function()
+          -- Run gofmt (using gofumpt as configured)
+          require("go.format").gofmt()
+          -- Ensure the file is saved after formatting
+          vim.cmd("write")
+        end,
+        desc = "Format Go file with gofumpt and save on BufWritePre",
+      })
+    end,
+    event = { "CmdlineEnter" },
+    ft = { "go", "gomod" },
+    build = ":GoUpdateBinaries",
   },
 }
 

@@ -1,3 +1,5 @@
+-- /home/devmiftahul/.config/nvim/lua/config/lsp.lua
+
 local utils = require("utils")
 
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -119,14 +121,11 @@ vim.lsp.config("*", {
 
 -- A mapping from lsp server name to the executable name
 local enabled_lsp_servers = {
+  lua_ls = "lua-language-server",
+  gopls = "gopls",
   pyright = "delance-langserver",
   ruff = "ruff",
-  lua_ls = "lua-language-server",
-  -- ltex = "ltex-ls",
-  -- clangd = "clangd",
   vimls = "vim-language-server",
-  bashls = "bash-language-server",
-  yamlls = "yaml-language-server",
 }
 
 for server_name, lsp_executable in pairs(enabled_lsp_servers) do
@@ -141,3 +140,14 @@ for server_name, lsp_executable in pairs(enabled_lsp_servers) do
     vim.notify(msg, vim.log.levels.WARN, { title = "Nvim-config" })
   end
 end
+
+vim.api.nvim_create_autocmd("ModeChanged", {
+  group = vim.api.nvim_create_augroup("auto_save_on_normal", { clear = true }),
+  pattern = "*:n", -- Trigger when switching to normal mode
+  callback = function()
+    if vim.bo.modified and vim.bo.buftype == "" then -- Only save if buffer is modified and is a normal file buffer
+      vim.cmd("write")
+    end
+  end,
+  desc = "Auto-save when entering normal mode",
+})

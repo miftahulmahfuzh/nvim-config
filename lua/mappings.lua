@@ -109,9 +109,116 @@ keymap.set("n", "<leader>v", "printf('`[%s`]', getregtype()[0])", {
 -- Search in selected region
 -- xnoremap / :<C-U>call feedkeys('/\%>'.(line("'<")-1).'l\%<'.(line("'>")+1)."l")<CR>
 
--- Change current working directory locally and print cwd after that,
--- see https://vim.fandom.com/wiki/Set_working_directory_to_the_current_file
-keymap.set("n", "<leader>cd", "<cmd>lcd %:p:h<cr><cmd>pwd<cr>", { desc = "change cwd" })
+----------------------------------------------------------------------------------------------------------------------
+
+-- Changes CWD to the file's directory,
+-- but copies the FULL file path (including filename) to the clipboard.
+keymap.set("n", "<leader>cd", function()
+  -- Get the full path of the current file (e.g., /path/to/file.go)
+  local full_path = vim.fn.expand('%:p')
+
+  -- Get just the directory part for the lcd command (e.g., /path/to)
+  local file_dir = vim.fn.expand('%:p:h')
+
+  -- Handle case where buffer is not saved and has no path
+  if full_path == "" then
+    vim.notify("Buffer has no file path", vim.log.levels.INFO, { title = "CWD & Copy" })
+    return
+  end
+
+  -- 1. Change the 'local' (window-specific) working directory
+  vim.cmd('lcd ' .. vim.fn.fnameescape(file_dir))
+
+  -- 2. Set the system clipboard register '+' to the FULL path
+  vim.fn.setreg('+', full_path)
+
+  -- 3. Display a confirmation message showing what was copied
+  local message = string.format("Path copied: %s", full_path)
+  vim.notify(message, vim.log.levels.INFO, { title = "Path Copied & CWD Set" })
+end, { desc = "Change CWD to dir & copy full file path" })
+
+-- Git shortcuts (requires a plugin like vim-fugitive)
+keymap.set("n", "<leader>gt", "<cmd>Git status<cr>", { silent = true, desc = "Git status" })
+keymap.set("n", "<leader>gd", "<cmd>Gdiffsplit<cr>", { silent = true, desc = "Git diff split" })
+keymap.set("n", "<leader>ga", "<cmd>Git add .<cr>", { silent = true, desc = "Git add all" })
+keymap.set("n", "<leader>gc", "<cmd>Git commit<cr>", { silent = true, desc = "Git commit" })
+keymap.set("n", "<leader>gp", "<cmd>Git push<cr>", { silent = true, desc = "Git push" })
+
+-- Simple search and replace for visually selected text
+keymap.set("x", "<leader>r", function()
+  -- Get the selected text using a simpler method
+  vim.cmd('normal! "zy')
+  local selected_text = vim.fn.getreg('z')
+
+  -- Clean up the text (remove newlines, trim whitespace)
+  selected_text = selected_text:gsub('\n', ''):gsub('^%s+', ''):gsub('%s+$', '')
+
+  if selected_text and selected_text ~= "" then
+    -- Escape special characters for search
+    local escaped_text = vim.fn.escape(selected_text, [[/\]])
+
+    -- Prompt for replacement
+    local replacement = vim.fn.input("Replace '" .. selected_text .. "' with: ")
+
+    if replacement and replacement ~= "" then
+      -- Perform the replacement across the entire file
+      vim.cmd(":%s/" .. escaped_text .. "/" .. replacement .. "/g")
+      vim.notify("Replaced all '" .. selected_text .. "' with '" .. replacement .. "'")
+    end
+  else
+    vim.notify("No text selected")
+  end
+end, { desc = "search and replace selected text" })
+
+-- Search and replace with confirmation for visually selected text
+keymap.set("x", "<leader>R", function()
+  -- Get the selected text using the same simple method
+  vim.cmd('normal! "zy')
+  local selected_text = vim.fn.getreg('z')
+
+  -- Clean up the text (remove newlines, trim whitespace)
+  selected_text = selected_text:gsub('\n', ''):gsub('^%s+', ''):gsub('%s+$', '')
+
+  if selected_text and selected_text ~= "" then
+    -- Escape special characters for search
+    local escaped_text = vim.fn.escape(selected_text, [[/\]])
+
+    -- Prompt for replacement
+    local replacement = vim.fn.input("Replace '" .. selected_text .. "' with: ")
+
+    if replacement and replacement ~= "" then
+      -- Perform the replacement with confirmation (gc flag)
+      vim.cmd(":%s/" .. escaped_text .. "/" .. replacement .. "/gc")
+    end
+  else
+    vim.notify("No text selected")
+  end
+end, { desc = "search and replace selected text (with confirmation)" })
+
+-- Quick search and replace for word under cursor (normal mode)
+keymap.set("n", "<leader>r", function()
+  local word = vim.fn.expand("<cword>")
+  if word ~= "" then
+    local replacement = vim.fn.input("Replace '" .. word .. "' with: ")
+    if replacement and replacement ~= "" then
+      vim.cmd(":%s/\\<" .. word .. "\\>/" .. replacement .. "/g")
+      vim.notify("Replaced all '" .. word .. "' with '" .. replacement .. "'")
+    end
+  end
+end, { desc = "search and replace word under cursor" })
+
+-- Quick search and replace for word under cursor with confirmation (normal mode)
+keymap.set("n", "<leader>R", function()
+  local word = vim.fn.expand("<cword>")
+  if word ~= "" then
+    local replacement = vim.fn.input("Replace '" .. word .. "' with: ")
+    if replacement and replacement ~= "" then
+      vim.cmd(":%s/\\<" .. word .. "\\>/" .. replacement .. "/gc")
+    end
+  end
+end, { desc = "search and replace word under cursor (with confirmation)" })
+
+----------------------------------------------------------------------------------------------------------------------
 
 -- Use Esc to quit builtin terminal
 keymap.set("t", "<Esc>", [[<c-\><c-n>]])
@@ -233,3 +340,9 @@ keymap.set("n", "<leader>cb", function()
     end)
   )
 end, { desc = "show cursor" })
+
+-- Exit insert mode and save with jk
+keymap.set("i", "jk", "<Esc>:write<CR>", { silent = true, desc = "exit insert mode and save" })
+
+-- Disable better-escape.vim's default jk mapping to avoid conflicts
+vim.g.better_escape_shortcut = ''  -- Remove default jk/jj mappings
