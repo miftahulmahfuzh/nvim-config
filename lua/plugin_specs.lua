@@ -410,14 +410,6 @@ local plugin_specs = {
     ft = { "markdown" },
   },
 
-  {
-    "rhysd/vim-grammarous",
-    enabled = function()
-      return vim.g.is_mac
-    end,
-    ft = { "markdown" },
-  },
-
   { "chrisbra/unicode.vim", keys = { "ga" }, cmd = { "UnicodeSearch" } },
 
   -- Additional powerful text object for vim, this plugin should be studied
@@ -426,15 +418,6 @@ local plugin_specs = {
 
   -- Plugin to manipulate character pairs quickly
   { "machakann/vim-sandwich", event = "VeryLazy" },
-
-  -- Only use these plugin on Windows and Mac and when LaTeX is installed
-  {
-    "lervag/vimtex",
-    enabled = function()
-      return utils.executable("latex")
-    end,
-    ft = { "tex" },
-  },
 
   -- Since tmux is only available on Linux and Mac, we only enable these plugins
   -- for Linux and Mac
@@ -555,22 +538,46 @@ local plugin_specs = {
     },
   },
   {
-    "CopilotC-Nvim/CopilotChat.nvim",
-    dependencies = {
-      { "zbirenbaum/copilot.lua" }, -- or github/copilot.vim
-    },
+    "yetone/avante.nvim",
+    event = "VeryLazy",
+    version = false, -- Never set this value to "*"! Never!
     opts = {
-      debug = true, -- Enable debugging
-      -- See Configuration section for rest
+      provider = "openai",
+      auto_suggestions_provider = "openai",
+      providers = {
+        openai = {
+          -- endpoint = "https://api.openai.com/v1",
+          -- model = "gpt-4o-mini",
+          endpoint = "https://api.deepseek.com/v1",
+          model = "deepseek-chat",
+          timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
+          extra_request_body = {
+            temperature = 0,
+            -- max_completion_tokens = 16384, -- for gpt-4o-mini
+            max_completion_tokens = 128000, -- for gpt-4o-mini
+          }
+        },
+      }
     },
-    cmd = { "CopilotChat" },
-  },
-  {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    config = function()
-      require("copilot").setup {}
-    end,
+    -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
+    build = "make",
+    -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+      "stevearc/dressing.nvim",
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+      --- The below dependencies are optional,
+      "echasnovski/mini.pick", -- for file_selector provider mini.pick
+      "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
+      "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
+      "ibhagwan/fzf-lua", -- for file_selector provider fzf
+      "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+    },
+    web_search_engine = {
+      provider = "tavily", -- tavily, serpapi, searchapi, google, kagi, brave, or searxng
+      proxy = nil, -- proxy support, e.g., http://127.0.0.1:7890
+    },
   },
   {
     "smjonas/live-command.nvim",
@@ -580,15 +587,6 @@ local plugin_specs = {
     config = function()
       require("config.live-command")
     end,
-  },
-  {
-    -- show hint for code actions, the user can also implement code actions themselves,
-    -- see discussion here: https://github.com/neovim/neovim/issues/14869
-    "kosayoda/nvim-lightbulb",
-    config = function()
-      require("config.lightbulb")
-    end,
-    event = "LspAttach",
   },
   {
     "Bekaboo/dropbar.nvim",
