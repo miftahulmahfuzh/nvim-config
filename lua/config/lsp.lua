@@ -1,3 +1,5 @@
+-- /home/devmiftahul/.config/nvim/lua/config/lsp.lua
+
 -- Enhanced LSP configuration to prevent attachment to fugitive buffers
 
 local utils = require("utils")
@@ -77,6 +79,21 @@ vim.api.nvim_create_autocmd("LspAttach", {
         end,
       }
     end, { desc = "go to definition" })
+    map("n", "gr", function()
+      vim.lsp.buf.references(nil, {
+        on_list = function(options)
+          if not options.items or vim.tbl_isempty(options.items) then
+            vim.notify("No references found.", vim.log.levels.INFO, { title = "LSP" })
+            return
+          end
+          -- Populate the quickfix list using the location items.
+          -- The ' ' as the third argument uses the `title` field from the `options` table.
+          vim.fn.setqflist({}, " ", options)
+          -- Open the quickfix window.
+          vim.cmd("copen")
+        end,
+      })
+    end, { desc = "go to references (quickfix)" })
     map("n", "<C-]>", vim.lsp.buf.definition)
     map("n", "K", function()
       vim.lsp.buf.hover { border = "single", max_height = 25, max_width = 120 }
