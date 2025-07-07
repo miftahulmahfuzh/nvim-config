@@ -246,9 +246,9 @@ keymap.set("n", "<leader>l", function()
 
   -- Use a threshold (e.g., 70% of total width) to determine if the window is currently maximized
   if current_width > total_width * 0.70 then
-    -- It's large -> make it small and switch focus back to the previous window
+    -- It's large -> make it small and switch focus to the left
     vim.api.nvim_win_set_width(avante_win_id, small_width)
-    vim.cmd("wincmd p") -- 'p' for previous window
+    vim.cmd("wincmd h") -- 'h' to move to the window to the left
   else
     -- It's small -> make it large and ensure it's focused
     vim.api.nvim_set_current_win(avante_win_id) -- Focus the avante window first
