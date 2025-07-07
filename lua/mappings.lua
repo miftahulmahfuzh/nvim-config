@@ -110,8 +110,6 @@ keymap.set("n", "<leader>v", "printf('`[%s`]', getregtype()[0])", {
 -- Search in selected region
 -- xnoremap / :<C-U>call feedkeys('/\%>'.(line("'<")-1).'l\%<'.(line("'>")+1)."l")<CR>
 
-----------------------------------------------------------------------------------------------------------------------
-
 -- Changes CWD to the file's directory,
 -- but copies the FULL file path (including filename) to the clipboard.
 keymap.set("n", "<leader>cd", function()
@@ -218,6 +216,45 @@ keymap.set("n", "<leader>R", function()
     end
   end
 end, { desc = "search and replace word under cursor (with confirmation)" })
+
+-- Toggle Avante window size
+keymap.set("n", "<leader>l", function()
+  -- Helper function to find a window by its filetype
+  local function find_win_by_ft(ft)
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.api.nvim_get_option_value("filetype", { buf = buf }) == ft then
+        return win
+      end
+    end
+    return nil
+  end
+
+  local avante_win_id = find_win_by_ft("Avante")
+
+  if not avante_win_id then
+    vim.notify("Avante window not found.", vim.log.levels.WARN, { title = "Avante Toggle" })
+    return
+  end
+
+  local total_width = vim.o.columns
+  local current_width = vim.api.nvim_win_get_width(avante_win_id)
+
+  -- Define small and large widths based on percentage
+  local small_width = math.floor(total_width * 0.40)
+  local large_width = math.floor(total_width * 0.99)
+
+  -- Use a threshold (e.g., 70% of total width) to determine if the window is currently maximized
+  if current_width > total_width * 0.70 then
+    -- It's large -> make it small and switch focus back to the previous window
+    vim.api.nvim_win_set_width(avante_win_id, small_width)
+    vim.cmd("wincmd p") -- 'p' for previous window
+  else
+    -- It's small -> make it large and ensure it's focused
+    vim.api.nvim_set_current_win(avante_win_id) -- Focus the avante window first
+    vim.api.nvim_win_set_width(avante_win_id, large_width)
+  end
+end, { desc = "Toggle Avante window size", silent = true })
 
 ----------------------------------------------------------------------------------------------------------------------
 
