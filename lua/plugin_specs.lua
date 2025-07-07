@@ -471,6 +471,7 @@ local plugin_specs = {
       "nvim-neotest/nvim-nio", -- Required for nvim-dap
       -- Installs the debug adapters for you
       "williamboman/mason.nvim",
+      "WhoIsSethDaniel/mason-tool-installer.nvim",
     },
     config = function()
       require("config.dap") -- We created this file in the previous step

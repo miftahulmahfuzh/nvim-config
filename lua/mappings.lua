@@ -259,33 +259,38 @@ end, { desc = "Toggle Avante window size", silent = true })
 ----------------------------------------------------------------------------------------------------------------------
 -- DEBUGGER KEYMAPS (NVIM-DAP)
 ----------------------------------------------------------------------------------------------------------------------
--- local dap = require("dap")
--- local dapui = require("dapui")
+--[[
+-- THIS IS THE OLD, BROKEN WAY
+local dap = require("dap")
+local dapui = require("dapui")
+keymap.set("n", "<leader>ds", dap.continue, { desc = "DAP: Start/Continue" })
+--]]
 
--- -- NOTE: Your <F11> is mapped to toggle spell. I've used <leader>di for 'Step Into'.
--- -- You can change these to your preference.
+-- THIS IS THE NEW, CORRECT WAY
+-- We wrap the calls in functions, so `require` is only called when the key is pressed.
 
--- -- Start/Continue a debug session
--- keymap.set("n", "<leader>ds", dap.continue, { desc = "DAP: Start/Continue" })
--- -- Step over
--- keymap.set("n", "<leader>de", dap.step_over, { desc = "DAP: Step Over" })
--- -- Step into
--- keymap.set("n", "<leader>di", dap.step_into, { desc = "DAP: Step Into" })
--- -- Step out
--- keymap.set("n", "<leader>do", dap.step_out, { desc = "DAP: Step Out" })
--- -- Set a breakpoint
--- keymap.set("n", "<leader>dt", dap.toggle_breakpoint, { desc = "DAP: Toggle Breakpoint" })
--- -- Set a conditional breakpoint
--- keymap.set("n", "<leader>db", function()
---   dap.set_breakpoint(vim.fn.input("Breakpoint condition: "))
--- end, { desc = "DAP: Set Conditional Breakpoint" })
+-- Start/Continue a debug session
+keymap.set("n", "<leader>ds", function() require("dap").continue() end, { desc = "DAP: Start/Continue" })
+-- Step over
+keymap.set("n", "<leader>de", function() require("dap").step_over() end, { desc = "DAP: Step Over" })
+-- Step into
+keymap.set("n", "<leader>di", function() require("dap").step_into() end, { desc = "DAP: Step Into" })
+-- Step out
+keymap.set("n", "<leader>do", function() require("dap").step_out() end, { desc = "DAP: Step Out" })
+-- Set a breakpoint
+keymap.set("n", "<leader>dt", function() require("dap").toggle_breakpoint() end, { desc = "DAP: Toggle Breakpoint" })
+-- Set a conditional breakpoint
+keymap.set("n", "<leader>db", function()
+  require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
+end, { desc = "DAP: Set Conditional Breakpoint" })
 
--- -- Toggle the DAP UI
--- keymap.set("n", "<leader>du", dapui.toggle, { desc = "DAP: Toggle UI" })
--- -- Open the DAP REPL
--- keymap.set("n", "<leader>dr", dap.repl.open, { desc = "DAP: Open REPL" })
--- -- Terminate the current session
--- keymap.set("n", "<leader>dk", dap.terminate, { desc = "DAP: Terminate Session" })
+-- Toggle the DAP UI
+keymap.set("n", "<leader>du", function() require("dapui").toggle() end, { desc = "DAP: Toggle UI" })
+-- Open the DAP REPL
+keymap.set("n", "<leader>dr", function() require("dap").repl.open() end, { desc = "DAP: Open REPL" })
+-- Terminate the current session
+keymap.set("n", "<leader>dk", function() require("dap").terminate() end, { desc = "DAP: Terminate Session" })
+
 
 ----------------------------------------------------------------------------------------------------------------------
 

@@ -1,33 +1,45 @@
 -- /home/devmiftahul/.config/nvim/lua/config/dap.lua
 
--- local dap = require("dap")
+require("dap").set_log_level("DEBUG")
+local dap = require("dap")
 
--- -- Tell nvim-dap where to find the delve debugger installed by Mason
--- local dap_delve_path = require("mason-registry").get_package("delve"):get_install_path() .. "/dlv"
+if vim.fn.executable("dlv") == 0 then
+  vim.notify("'delve' (dlv) not found in PATH. Please run :MasonInstall delve", vim.log.levels.WARN, { title = "nvim-dap" })
+  return
+end
 
 -- dap.adapters.go = {
 --   type = "executable",
---   command = dap_delve_path,
+--   command = vim.fn.stdpath("data") .. "/mason/bin/dlv",
 --   args = { "dap" },
 -- }
+dap.adapters.go = {
+  type = "server",
+  port = 2345,
+  executable = {
+    command = vim.fn.stdpath("data") .. "/mason/bin/dlv",
+    args = { "dap", "--listen=127.0.0.1:2345" },
+  },
+}
 
--- -- This is the crucial part that tells nvim-dap how to configure the debug session for Go
--- dap.configurations.go = {
---   {
---     type = "go",
---     name = "Debug (Test file)",
---     request = "launch",
---     -- This allows you to debug the current test function
---     mode = "test",
---     program = "${fileDirname}",
---   },
---   {
---     type = "go",
---     name = "Debug (Main file)",
---     request = "launch",
---     mode = "debug",
---     program = "${fileDirname}",
---   },
--- }
+dap.configurations.go = {
+  {
+    type = "go",
+    name = "Debug (Test file)",
+    request = "launch",
+    mode = "test",
+    program = "${file}",
+    cwd = vim.fn.fnamemodify(vim.fn.findfile("go.mod", ".;"), ":h"),
+    args = { "-test.run", "^${func}$" },
+  },
+  {
+    type = "go",
+    name = "Debug (Main file)",
+    request = "launch",
+    mode = "debug",
+    program = vim.fn.expand("%:p:h"),
+    cwd = vim.fn.fnamemodify(vim.fn.findfile("go.mod", ".;"), ":h"),
+  },
+}
 
--- print("nvim-dap for Go configured successfully.")
+print("nvim-dap for Go configured successfully.")
