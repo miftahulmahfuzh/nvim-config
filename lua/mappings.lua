@@ -257,6 +257,37 @@ keymap.set("n", "<leader>l", function()
 end, { desc = "Toggle Avante window size", silent = true })
 
 ----------------------------------------------------------------------------------------------------------------------
+-- DEBUGGER KEYMAPS (NVIM-DAP)
+----------------------------------------------------------------------------------------------------------------------
+-- local dap = require("dap")
+-- local dapui = require("dapui")
+
+-- -- NOTE: Your <F11> is mapped to toggle spell. I've used <leader>di for 'Step Into'.
+-- -- You can change these to your preference.
+
+-- -- Start/Continue a debug session
+-- keymap.set("n", "<leader>ds", dap.continue, { desc = "DAP: Start/Continue" })
+-- -- Step over
+-- keymap.set("n", "<leader>de", dap.step_over, { desc = "DAP: Step Over" })
+-- -- Step into
+-- keymap.set("n", "<leader>di", dap.step_into, { desc = "DAP: Step Into" })
+-- -- Step out
+-- keymap.set("n", "<leader>do", dap.step_out, { desc = "DAP: Step Out" })
+-- -- Set a breakpoint
+-- keymap.set("n", "<leader>dt", dap.toggle_breakpoint, { desc = "DAP: Toggle Breakpoint" })
+-- -- Set a conditional breakpoint
+-- keymap.set("n", "<leader>db", function()
+--   dap.set_breakpoint(vim.fn.input("Breakpoint condition: "))
+-- end, { desc = "DAP: Set Conditional Breakpoint" })
+
+-- -- Toggle the DAP UI
+-- keymap.set("n", "<leader>du", dapui.toggle, { desc = "DAP: Toggle UI" })
+-- -- Open the DAP REPL
+-- keymap.set("n", "<leader>dr", dap.repl.open, { desc = "DAP: Open REPL" })
+-- -- Terminate the current session
+-- keymap.set("n", "<leader>dk", dap.terminate, { desc = "DAP: Terminate Session" })
+
+----------------------------------------------------------------------------------------------------------------------
 
 -- Use Esc to quit builtin terminal
 keymap.set("t", "<Esc>", [[<c-\><c-n>]])

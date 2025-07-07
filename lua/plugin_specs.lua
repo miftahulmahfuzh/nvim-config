@@ -148,16 +148,16 @@ local plugin_specs = {
     branch = "v2",
   },
   { "rebelot/kanagawa.nvim", lazy = true },
-  { "miikanissi/modus-themes.nvim", lazy = true},
-  { "wtfox/jellybeans.nvim", lazy = true},
-  { "projekt0n/github-nvim-theme", name = "github-theme", lazy = true},
-  { "e-ink-colorscheme/e-ink.nvim", lazy = true},
-  { "ficcdaf/ashen.nvim", lazy = true},
-  { "savq/melange-nvim", lazy = true},
-  { "Skardyy/makurai-nvim", lazy = true},
-  { "vague2k/vague.nvim", lazy = true},
-  { "webhooked/kanso.nvim", lazy = true},
-  { "zootedb0t/citruszest.nvim", lazy = true},
+  { "miikanissi/modus-themes.nvim", lazy = true },
+  { "wtfox/jellybeans.nvim", lazy = true },
+  { "projekt0n/github-nvim-theme", name = "github-theme", lazy = true },
+  { "e-ink-colorscheme/e-ink.nvim", lazy = true },
+  { "ficcdaf/ashen.nvim", lazy = true },
+  { "savq/melange-nvim", lazy = true },
+  { "Skardyy/makurai-nvim", lazy = true },
+  { "vague2k/vague.nvim", lazy = true },
+  { "webhooked/kanso.nvim", lazy = true },
+  { "zootedb0t/citruszest.nvim", lazy = true },
 
   -- plugins to provide nerdfont icons
   {
@@ -461,12 +461,69 @@ local plugin_specs = {
       vim.cmd(cmd_str)
     end,
   },
-  -- Debugger plugin
+  -- =============================================================================
+  -- DEBUGGER CONFIGURATION (DAP)
+  -- =============================================================================
+  {
+    "mfussenegger/nvim-dap",
+    event = "VeryLazy",
+    dependencies = {
+      "nvim-neotest/nvim-nio", -- Required for nvim-dap
+      -- Installs the debug adapters for you
+      "williamboman/mason.nvim",
+    },
+    config = function()
+      require("config.dap") -- We created this file in the previous step
+    end,
+  },
+  {
+    "rcarriga/nvim-dap-ui",
+    event = "VeryLazy",
+    dependencies = { "mfussenegger/nvim-dap" },
+    config = function()
+      local dapui = require("dapui")
+      dapui.setup({
+        -- A good default layout. See :help dapui-layouts
+        layouts = {
+          {
+            elements = {
+              { id = "scopes", size = 0.33 },
+              { id = "breakpoints", size = 0.17 },
+              { id = "stacks", size = 0.25 },
+              { id = "watches", size = 0.25 },
+            },
+            size = 40,
+            position = "left",
+          },
+          {
+            elements = {
+              { id = "repl", size = 0.5 },
+              { id = "console", size = 0.5 },
+            },
+            size = 0.25,
+            position = "bottom",
+          },
+        },
+      })
+
+      -- Automatically open/close the UI when a debug session starts/stops
+      local dap = require("dap")
+      dap.listeners.after.event_initialized["dapui_config"] = function()
+        dapui.open()
+      end
+      dap.listeners.before.event_terminated["dapui_config"] = function()
+        dapui.close()
+      end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close()
+      end
+    end,
+  },
+
+  -- Debugger plugin (GDB based - we will use nvim-dap for Go instead)
   {
     "sakhnik/nvim-gdb",
-    enabled = function()
-      return vim.g.is_win or vim.g.is_linux
-    end,
+    enabled = false, -- Disabled in favor of nvim-dap for Go
     build = { "bash install.sh" },
     lazy = true,
   },
@@ -555,9 +612,9 @@ local plugin_specs = {
             temperature = 0,
             -- max_completion_tokens = 16384, -- for gpt-4o-mini
             max_completion_tokens = 128000, -- for gpt-4o-mini
-          }
+          },
         },
-      }
+      },
     },
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
     build = "make",
@@ -616,6 +673,7 @@ local plugin_specs = {
       require("mason-tool-installer").setup({
         ensure_installed = {
           "gofumpt", -- Add gofumpt here
+          "delve", -- Make sure Delve (the Go debugger) is installed
         },
         auto_update = true,
         run_on_start = true,
@@ -629,7 +687,7 @@ local plugin_specs = {
     config = function()
       require("mason-lspconfig").setup({
         -- A list of servers to automatically install if they're not already installed
-        ensure_installed = { "lua_ls", "yamlls", "bashls", },
+        ensure_installed = { "lua_ls", "yamlls", "bashls" },
       })
     end,
   },
