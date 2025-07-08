@@ -129,7 +129,7 @@ local plugin_specs = {
     "MeanderingProgrammer/markdown.nvim",
     main = "render-markdown",
     opts = {},
-    ft = { "markdown" },
+    ft = { "markdown", "Avante" },
   },
   -- A list of colorscheme plugin you may want to try. Find what suits you.
   { "navarasu/onedark.nvim", lazy = true },
@@ -141,12 +141,6 @@ local plugin_specs = {
   { "catppuccin/nvim", name = "catppuccin", lazy = true },
   { "olimorris/onedarkpro.nvim", lazy = true },
   { "marko-cerovac/material.nvim", lazy = true },
-  {
-    "rockyzhang24/arctic.nvim",
-    dependencies = { "rktjmp/lush.nvim" },
-    name = "arctic",
-    branch = "v2",
-  },
   { "rebelot/kanagawa.nvim", lazy = true },
   { "miikanissi/modus-themes.nvim", lazy = true },
   { "wtfox/jellybeans.nvim", lazy = true },
@@ -158,6 +152,12 @@ local plugin_specs = {
   { "vague2k/vague.nvim", lazy = true },
   { "webhooked/kanso.nvim", lazy = true },
   { "zootedb0t/citruszest.nvim", lazy = true },
+  {
+    "rockyzhang24/arctic.nvim",
+    dependencies = { "rktjmp/lush.nvim" },
+    name = "arctic",
+    branch = "v2",
+  },
 
   -- plugins to provide nerdfont icons
   {
@@ -520,6 +520,20 @@ local plugin_specs = {
       end
     end,
   },
+   {
+"leoluz/nvim-dap-go",
+ft = "go",
+dependencies = { "mfussenegger/nvim-dap" },
+opts = {
+    delve = {
+        detached = false,
+    },
+},
+config = function(_, opts)
+  require("dap-go").setup(opts)
+  require('dap').set_log_level('TRACE')
+end,
+},
 
   -- Debugger plugin (GDB based - we will use nvim-dap for Go instead)
   {
