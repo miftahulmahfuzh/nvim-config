@@ -8,12 +8,6 @@ if vim.fn.executable("dlv") == 0 then
   return
 end
 
--- Configure the Go adapter for Delve
--- dap.adapters.go = {
---   type = "executable",
---   command = "dlv",
---   args = { "dap", "-l", "127.0.0.1:38697" },
--- }
 dap.adapters.go = {
   type = "server",
   port = 2345,
@@ -23,53 +17,20 @@ dap.adapters.go = {
   },
 }
 
-
--- Alternative adapter configuration (if the above doesn't work)
--- dap.adapters.go = {
---   type = "server",
---   port = "${port}",
---   executable = {
---     command = "dlv",
---     args = { "dap", "-l", "127.0.0.1:${port}" },
---   },
--- }
-
 -- Configure Go debugging scenarios
 dap.configurations.go = {
   {
     type = "go",
-    name = "Debug",
+    name = "Debug Test (go.mod)",
     request = "launch",
-    program = "${file}",
+    mode = "test",
+    program = "./${relativeFileDirname}",
     showLog = false,
   },
   {
     type = "go",
     name = "Debug (go.mod)",
     request = "launch",
-    program = "./${relativeFileDirname}",
-    showLog = false,
-  },
-  {
-    type = "go",
-    name = "Debug Package",
-    request = "launch",
-    program = "${fileDirname}",
-    showLog = false,
-  },
-  {
-    type = "go",
-    name = "Debug Test",
-    request = "launch",
-    mode = "test",
-    program = "${file}",
-    showLog = false,
-  },
-  {
-    type = "go",
-    name = "Debug Test (go.mod)",
-    request = "launch",
-    mode = "test",
     program = "./${relativeFileDirname}",
     showLog = false,
   },
