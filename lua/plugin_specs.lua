@@ -461,87 +461,6 @@ local plugin_specs = {
       vim.cmd(cmd_str)
     end,
   },
-  -- =============================================================================
-  -- DEBUGGER CONFIGURATION (DAP)
-  -- =============================================================================
-  {
-    "mfussenegger/nvim-dap",
-    event = "VeryLazy",
-    dependencies = {
-      "nvim-neotest/nvim-nio", -- Required for nvim-dap
-      -- Installs the debug adapters for you
-      "williamboman/mason.nvim",
-      "WhoIsSethDaniel/mason-tool-installer.nvim",
-    },
-    config = function()
-      require("config.dap") -- We created this file in the previous step
-    end,
-  },
-  {
-    "rcarriga/nvim-dap-ui",
-    event = "VeryLazy",
-    dependencies = { "mfussenegger/nvim-dap" },
-    config = function()
-      local dapui = require("dapui")
-      dapui.setup({
-        -- A good default layout. See :help dapui-layouts
-        layouts = {
-          {
-            elements = {
-              { id = "scopes", size = 0.33 },
-              { id = "breakpoints", size = 0.17 },
-              { id = "stacks", size = 0.25 },
-              { id = "watches", size = 0.25 },
-            },
-            size = 40,
-            position = "left",
-          },
-          {
-            elements = {
-              { id = "repl", size = 0.5 },
-              { id = "console", size = 0.5 },
-            },
-            size = 0.25,
-            position = "bottom",
-          },
-        },
-      })
-
-      -- Automatically open/close the UI when a debug session starts/stops
-      local dap = require("dap")
-      dap.listeners.after.event_initialized["dapui_config"] = function()
-        dapui.open()
-      end
-      dap.listeners.before.event_terminated["dapui_config"] = function()
-        dapui.close()
-      end
-      dap.listeners.before.event_exited["dapui_config"] = function()
-        dapui.close()
-      end
-    end,
-  },
-   {
-"leoluz/nvim-dap-go",
-ft = "go",
-dependencies = { "mfussenegger/nvim-dap" },
-opts = {
-    delve = {
-        detached = false,
-    },
-},
-config = function(_, opts)
-  require("dap-go").setup(opts)
-  require('dap').set_log_level('TRACE')
-end,
-},
-
-  -- Debugger plugin (GDB based - we will use nvim-dap for Go instead)
-  {
-    "sakhnik/nvim-gdb",
-    enabled = false, -- Disabled in favor of nvim-dap for Go
-    build = { "bash install.sh" },
-    lazy = true,
-  },
 
   -- Session management plugin
   { "tpope/vim-obsession", cmd = "Obsession" },
@@ -626,9 +545,13 @@ end,
           extra_request_body = {
             temperature = 0,
             -- max_completion_tokens = 16384, -- for gpt-4o-mini
-            max_completion_tokens = 128000, -- for gpt-4o-mini
+            max_completion_tokens = 128000, -- for deepseek
           },
         },
+      },
+      web_search_engine = {
+        provider = "tavily", -- tavily, serpapi, searchapi, google, kagi, brave, or searxng
+        proxy = nil, -- proxy support, e.g., http://127.0.0.1:7890
       },
     },
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
@@ -645,10 +568,6 @@ end,
       "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
       "ibhagwan/fzf-lua", -- for file_selector provider fzf
       "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-    },
-    web_search_engine = {
-      provider = "tavily", -- tavily, serpapi, searchapi, google, kagi, brave, or searxng
-      proxy = nil, -- proxy support, e.g., http://127.0.0.1:7890
     },
   },
   {
@@ -722,17 +641,14 @@ end,
         gofmt = "gofumpt", -- Use gofumpt for formatting
         run_in_floaterm = false, -- Optional: Run commands in a floating terminal
       })
-      -- Set up autocommand to format and save Go files
+      -- Set up autocommand to format Go files on save
       vim.api.nvim_create_autocmd("BufWritePre", {
         group = vim.api.nvim_create_augroup("go_format_on_save", { clear = true }),
         pattern = { "*.go" },
         callback = function()
-          -- Run gofmt (using gofumpt as configured)
           require("go.format").gofmt()
-          -- Ensure the file is saved after formatting
-          vim.cmd("write")
         end,
-        desc = "Format Go file with gofumpt and save on BufWritePre",
+        desc = "Format Go file with gofumpt on BufWritePre",
       })
     end,
     event = { "CmdlineEnter" },
