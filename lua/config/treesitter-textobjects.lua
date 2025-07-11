@@ -1,3 +1,5 @@
+-- /home/devmiftahul/.config/nvim/lua/config/treesitter-textobjects.lua
+
 require("nvim-treesitter.configs").setup {
   textobjects = {
     select = {
