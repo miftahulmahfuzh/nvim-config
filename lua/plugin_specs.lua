@@ -38,17 +38,6 @@ local plugin_specs = {
       require("config.nvim-cmp")
     end,
   },
-  -- {
-  --   "saghen/blink.cmp",
-  --   -- optional: provides snippets for the snippet source
-  --   dependencies = { "rafamadriz/friendly-snippets" },
-  --   -- use a release tag to download pre-built binaries
-  --   version = "1.*",
-  --   config = function()
-  --     require("config.blink-cmp")
-  --   end,
-  --   opts_extend = { "sources.default" },
-  -- },
   {
     "neovim/nvim-lspconfig",
     config = function()
@@ -125,12 +114,131 @@ local plugin_specs = {
     end,
     event = "VeryLazy",
   },
-  {
-    "MeanderingProgrammer/markdown.nvim",
-    main = "render-markdown",
-    opts = {},
-    ft = { "markdown", "Avante" },
+  -- Updated render-markdown configuration
+{
+  "MeanderingProgrammer/markdown.nvim",
+  main = "render-markdown",
+  opts = {
+    -- Enable rendering for Avante buffers
+    file_types = { "markdown", "Avante" },
+    -- Configure how markdown is rendered
+    render_modes = { "n", "v", "i", "c" },
+    -- Enable anti-conceal to show markdown syntax when cursor is on line
+    anti_conceal = {
+      enabled = true,
+    },
+    -- Configure headings
+    heading = {
+      enabled = true,
+      sign = true,
+      icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
+    },
+    -- Configure code blocks
+    code = {
+      enabled = true,
+      sign = true,
+      style = "full",
+      position = "left",
+      language_pad = 0,
+      disable_background = { "diff" },
+      width = "full",
+      left_pad = 0,
+      right_pad = 0,
+      min_width = 0,
+      border = "thin",
+      above = "▄",
+      below = "▀",
+      highlight = "RenderMarkdownCode",
+      highlight_inline = "RenderMarkdownCodeInline",
+    },
+    -- Configure dash/bullet points
+    dash = {
+      enabled = true,
+      icon = "─",
+      width = 4,
+      highlight = "RenderMarkdownDash",
+    },
+    -- Configure bullet points
+    bullet = {
+      enabled = true,
+      icons = { "●", "○", "◆", "◇" },
+      left_pad = 0,
+      right_pad = 0,
+      highlight = "RenderMarkdownBullet",
+    },
+    -- Configure checkboxes
+    checkbox = {
+      enabled = true,
+      unchecked = {
+        icon = "󰄱 ",
+        highlight = "RenderMarkdownUnchecked",
+      },
+      checked = {
+        icon = "󰱒 ",
+        highlight = "RenderMarkdownChecked",
+      },
+      custom = {
+        todo = { raw = "[-]", rendered = "󰥔 ", highlight = "RenderMarkdownTodo" },
+      },
+    },
+    -- Configure quotes
+    quote = {
+      enabled = true,
+      icon = "▋",
+      repeat_linebreak = false,
+      highlight = "RenderMarkdownQuote",
+    },
+    -- Configure tables
+    pipe_table = {
+      enabled = true,
+      preset = "none",
+      style = "full",
+      cell = "padded",
+      min_width = 0,
+      border = {
+        "┌", "┬", "┐",
+        "├", "┼", "┤",
+        "└", "┴", "┘",
+        "│", "─",
+      },
+      alignment_indicator = "━",
+      head = "RenderMarkdownTableHead",
+      row = "RenderMarkdownTableRow",
+      filler = "RenderMarkdownTableFill",
+    },
+    -- Configure callouts (for things like > [!NOTE])
+    callout = {
+      note = { raw = "[!NOTE]", rendered = "󰋽 Note", highlight = "RenderMarkdownInfo" },
+      tip = { raw = "[!TIP]", rendered = "󰌶 Tip", highlight = "RenderMarkdownSuccess" },
+      important = { raw = "[!IMPORTANT]", rendered = "󰅾 Important", highlight = "RenderMarkdownHint" },
+      warning = { raw = "[!WARNING]", rendered = "󰀪 Warning", highlight = "RenderMarkdownWarn" },
+      caution = { raw = "[!CAUTION]", rendered = "󰳦 Caution", highlight = "RenderMarkdownError" },
+    },
+    -- Configure links
+    link = {
+      enabled = true,
+      image = "󰥶 ",
+      hyperlink = "󰌹 ",
+      highlight = "RenderMarkdownLink",
+      custom = {
+        web = { pattern = "^http[s]?://", icon = "󰖟 ", highlight = "RenderMarkdownLink" },
+      },
+    },
+    -- Configure inline highlighting
+    inline_highlight = {
+      enabled = true,
+    },
+    -- Configure latex
+    latex = {
+      enabled = true,
+      converter = "latex2text",
+      highlight = "RenderMarkdownMath",
+      top_pad = 0,
+      bottom_pad = 0,
+    },
   },
+  ft = { "markdown", "Avante" },
+},
   -- A list of colorscheme plugin you may want to try. Find what suits you.
   { "navarasu/onedark.nvim", lazy = true },
   { "sainnhe/edge", lazy = true },
@@ -400,16 +508,6 @@ local plugin_specs = {
   -- Vim tabular plugin for manipulate tabular, required by markdown plugins
   { "godlygeek/tabular", ft = { "markdown" } },
 
-  -- Markdown previewing (only for Mac and Windows)
-  {
-    "iamcco/markdown-preview.nvim",
-    enabled = function()
-      return vim.g.is_win or vim.g.is_mac
-    end,
-    build = "cd app && npm install && git restore .",
-    ft = { "markdown" },
-  },
-
   { "chrisbra/unicode.vim", keys = { "ga" }, cmd = { "UnicodeSearch" } },
 
   -- Additional powerful text object for vim, this plugin should be studied
@@ -437,30 +535,6 @@ local plugin_specs = {
   -- Asynchronous command execution
   { "skywind3000/asyncrun.vim", lazy = true, cmd = { "AsyncRun" } },
   { "cespare/vim-toml", ft = { "toml" }, branch = "main" },
-
-  -- Edit text area in browser using nvim
-  {
-    "glacambre/firenvim",
-    enabled = function()
-      return vim.g.is_win or vim.g.is_mac
-    end,
-    -- it seems that we can only call the firenvim function directly.
-    -- Using vim.fn or vim.cmd to call this function will fail.
-    build = function()
-      local firenvim_path = plugin_dir .. "/firenvim"
-      vim.opt.runtimepath:append(firenvim_path)
-      vim.cmd("runtime! firenvim.vim")
-
-      -- macOS will reset the PATH when firenvim starts a nvim process, causing the PATH variable to change unexpectedly.
-      -- Here we are trying to get the correct PATH and use it for firenvim.
-      -- See also https://github.com/glacambre/firenvim/blob/master/TROUBLESHOOTING.md#make-sure-firenvims-path-is-the-same-as-neovims
-      local path_env = vim.env.PATH
-      local prologue = string.format('export PATH="%s"', path_env)
-      -- local prologue = "echo"
-      local cmd_str = string.format(":call firenvim#install(0, '%s')", prologue)
-      vim.cmd(cmd_str)
-    end,
-  },
 
   -- Session management plugin
   { "tpope/vim-obsession", cmd = "Obsession" },
@@ -528,48 +602,91 @@ local plugin_specs = {
       },
     },
   },
-  {
-    "yetone/avante.nvim",
-    event = "VeryLazy",
-    version = false, -- Never set this value to "*"! Never!
-    opts = {
-      provider = "openai",
-      auto_suggestions_provider = "openai",
-      providers = {
-        openai = {
-          -- endpoint = "https://api.openai.com/v1",
-          -- model = "gpt-4o-mini",
-          endpoint = "https://api.deepseek.com/v1",
-          model = "deepseek-chat",
-          timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
-          extra_request_body = {
-            temperature = 0,
-            -- max_completion_tokens = 16384, -- for gpt-4o-mini
-            max_completion_tokens = 128000, -- for deepseek
-          },
+  -- Updated Avante configuration with markdown rendering
+{
+  "yetone/avante.nvim",
+  event = "VeryLazy",
+  version = false, -- Never set this value to "*"! Never!
+  opts = {
+    provider = "openai",
+    auto_suggestions_provider = "openai",
+    providers = {
+      openai = {
+        -- endpoint = "https://api.openai.com/v1",
+        -- model = "gpt-4o-mini",
+        endpoint = "https://api.deepseek.com/v1",
+        model = "deepseek-chat",
+        timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
+        extra_request_body = {
+          temperature = 0,
+          -- max_completion_tokens = 16384, -- for gpt-4o-mini
+          max_completion_tokens = 128000, -- for deepseek
         },
       },
-      web_search_engine = {
-        provider = "tavily", -- tavily, serpapi, searchapi, google, kagi, brave, or searxng
-        proxy = nil, -- proxy support, e.g., http://127.0.0.1:7890
+    },
+    web_search_engine = {
+      provider = "tavily", -- tavily, serpapi, searchapi, google, kagi, brave, or searxng
+      proxy = nil, -- proxy support, e.g., http://127.0.0.1:7890
+    },
+    -- Enable markdown rendering in the sidebar
+    sidebar = {
+      width = 30,
+      border = "rounded",
+      -- Enable markdown rendering for the sidebar
+      render = {
+        markdown = true,
+        -- Optional: customize markdown rendering
+        signs = {
+          submit = "󰒖",
+          switch = "󰌽",
+        },
       },
     },
-    -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
-    build = "make",
-    -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      "stevearc/dressing.nvim",
-      "nvim-lua/plenary.nvim",
-      "MunifTanjim/nui.nvim",
-      --- The below dependencies are optional,
-      "echasnovski/mini.pick", -- for file_selector provider mini.pick
-      "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
-      "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
-      "ibhagwan/fzf-lua", -- for file_selector provider fzf
-      "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+    -- Configure the chat window to use markdown
+    chat = {
+      -- Enable markdown rendering in chat
+      markdown = true,
+      -- Use treesitter for syntax highlighting
+      treesitter = true,
+    },
+    -- Configure windows to support markdown
+    windows = {
+      -- Enable markdown rendering in all avante windows
+      markdown = true,
+      -- Set the filetype for avante buffers to support markdown
+      filetype = "Avante",
+    },
+    -- Optional: Configure highlights for better markdown display
+    highlights = {
+      diff = {
+        current = "DiffText",
+        incoming = "DiffAdd",
+      },
+    },
+    -- Enable conceal for markdown elements (hides markup characters)
+    conceal = {
+      enabled = true,
+      -- Conceal level for markdown (0-3)
+      level = 2,
     },
   },
+  -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
+  build = "make",
+  -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
+  dependencies = {
+    "nvim-treesitter/nvim-treesitter",
+    "stevearc/dressing.nvim",
+    "nvim-lua/plenary.nvim",
+    "MunifTanjim/nui.nvim",
+    --- The below dependencies are optional,
+    "echasnovski/mini.pick", -- for file_selector provider mini.pick
+    "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
+    "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
+    "ibhagwan/fzf-lua", -- for file_selector provider fzf
+    "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+    "MeanderingProgrammer/markdown.nvim", -- Add this as explicit dependency
+  },
+},
   {
     "smjonas/live-command.nvim",
     -- live-command supports semantic versioning via Git tags
