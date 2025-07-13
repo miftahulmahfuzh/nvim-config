@@ -110,6 +110,37 @@ keymap.set("n", "<leader>v", "printf('`[%s`]', getregtype()[0])", {
 -- Search in selected region
 -- xnoremap / :<C-U>call feedkeys('/\%>'.(line("'<")-1).'l\%<'.(line("'>")+1)."l")<CR>
 
+-- OpenCode integration
+-- Keymaps for interacting with opencode, a CLI tool for software engineering tasks
+
+-- Open opencode in a new terminal split
+vim.keymap.set('n', '<leader>oc', ':vsplit | term opencode<CR>', {
+    noremap = true,
+    silent = true,
+    desc = "Open opencode in a new terminal split"
+})
+
+-- Send the entire file's content to opencode for review
+vim.keymap.set('n', '<leader>or', function()
+    vim.cmd('vsplit | term opencode run "Review this file for improvements." --file ' .. vim.fn.expand('%:p'))
+end, {
+    noremap = true,
+    silent = true,
+    desc = "Run opencode review on current file"
+})
+
+-- Send the visually selected text to opencode for analysis
+vim.keymap.set('v', '<leader>or', function()
+    local selected_text = vim.fn.getreg('"')
+    vim.cmd('vsplit | term opencode run "' .. selected_text:gsub('"', '\\"') .. '"')
+end, {
+    noremap = true,
+    silent = true,
+    desc = "Run opencode on visual selection"
+})
+
+------------
+
 -- Changes CWD to the file's directory,
 -- but copies the FULL file path (including filename) to the clipboard.
 keymap.set("n", "<leader>cd", function()
