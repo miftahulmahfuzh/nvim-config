@@ -1,3 +1,5 @@
+-- /home/devmiftahul/.config/nvim/lua/colorschemes.lua
+
 --- This module will load a random colorscheme on nvim startup process.
 local utils = require("utils")
 
@@ -81,7 +83,7 @@ M.colorscheme_conf = {
     vim.cmd([[colorscheme melange]])
   end,
   makurai = function()
-    vim.cmd.colorscheme("makurai")
+    vim.cmd.colorscheme("makurai_dark")
   end,
   vague = function()
     vim.cmd([[colorscheme vague]])
@@ -91,6 +93,13 @@ M.colorscheme_conf = {
   end,
   citruszest = function()
     vim.cmd([[colorscheme citruszest]])
+  end,
+  -- Added catppuccin configuration
+  catppuccin = function()
+    require("catppuccin").setup({
+      flavour = "mocha", -- latte, frappe, macchiato, mocha
+    })
+    vim.cmd.colorscheme("catppuccin")
   end,
 }
 
