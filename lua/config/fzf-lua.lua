@@ -170,7 +170,6 @@ vim.keymap.set("v", "<leader>z", function()
   end
 
   -- 2. Get the full path of the current file
-  -- local file_path = vim.fn.expand('%:p')
   local file_path = vim.fn.expand('%')
   if file_path == "" then
     vim.notify("Cannot get context from an unsaved buffer. Please save the file first.", vim.log.levels.WARN, { title = "OpenCode" })
@@ -180,7 +179,7 @@ vim.keymap.set("v", "<leader>z", function()
   -- 3. Construct the prompt for OpenCode
   -- Format it to include both the file context and the selected text
   local opencode_prompt = string.format(
-    'analyze the following snippet from @%s:\"%s\"',
+    'analyze the following snippet from @%s : " %s "',
     file_path,
     selected_text
   )
