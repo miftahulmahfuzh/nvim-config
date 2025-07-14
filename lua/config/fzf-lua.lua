@@ -59,43 +59,93 @@ end, { desc = "Grep for word/selection" })
 vim.keymap.set("n", "<leader>fo", function()
   local fzf = require("fzf-lua")
   fzf.files({
-    -- This action enables multi-selection with the Tab key and defines
-    -- what happens when you press Enter.
     actions = {
       ["default"] = function(selected)
-        -- 'selected' is a table containing the paths of the files you chose.
         if not selected or #selected == 0 then
           vim.notify("No files selected.", vim.log.levels.WARN, { title = "OpenCode" })
           return
         end
 
-        -- 1. Format each file path with the "@" prefix.
         local formatted_files = {}
         for _, file_path in ipairs(selected) do
           table.insert(formatted_files, "@" .. file_path)
         end
-
-        -- 2. Join the formatted file paths with " and ".
         local file_args = table.concat(formatted_files, " and ")
-
-        -- 3. Construct the full 'opencode' command. The outer quotes are
-        --    important for the shell to treat the prompt as a single argument.
         local opencode_cmd = string.format('opencode -p "analyze %s"', file_args)
-
-        -- 4. Get the current working directory to start the new tmux pane in the same context.
         local current_dir = vim.fn.getcwd()
 
-        -- 5. Build the final tmux command. We use vim.fn.shellescape to handle
-        --    any special characters in the directory path or the command itself.
-        local tmux_cmd = string.format("tmux split-window -h -c %s %s",
+        -- FIXED: Set both PATH and EDITOR environment variables to ensure OpenCode uses the correct nvim
+        local nvim_bin_path = "/opt/nvim-linux-x86_64/bin"
+        local nvim_full_path = "/opt/nvim-linux-x86_64/bin/nvim"
+
+        -- Create a shell command that exports the environment variables and then runs opencode
+        local full_shell_cmd = string.format("export PATH=%s:$PATH && export EDITOR=%s && %s",
+                                             vim.fn.shellescape(nvim_bin_path),
+                                             vim.fn.shellescape(nvim_full_path),
+                                             opencode_cmd)
+
+        -- Build the final tmux command using bash to ensure the export commands work
+        local tmux_cmd = string.format("tmux split-window -h -c %s bash -c %s",
                                      vim.fn.shellescape(current_dir),
-                                     vim.fn.shellescape(opencode_cmd))
+                                     vim.fn.shellescape(full_shell_cmd))
 
-        -- 6. Execute the command system-wide.
         vim.fn.system(tmux_cmd)
-
         vim.notify("Sent " .. #selected .. " file(s) to OpenCode in new tmux pane.", vim.log.levels.INFO, { title = "OpenCode" })
       end
     }
   })
 end, { desc = "Fuzzy find files and open with OpenCode in tmux" })
+
+vim.keymap.set("n", "<leader>fO", function()
+  local fzf = require("fzf-lua")
+  fzf.files({
+    actions = {
+      ["default"] = function(selected)
+        if not selected or #selected == 0 then
+          vim.notify("No files selected.", vim.log.levels.WARN, { title = "OpenCode" })
+          return
+        end
+
+        -- 1. Format the file paths and join them into the new prompt string.
+        local formatted_files = {}
+        for _, file_path in ipairs(selected) do
+          table.insert(formatted_files, "@" .. vim.fn.fnameescape(file_path))
+        end
+        local file_args = table.concat(formatted_files, " and ")
+        local opencode_prompt = string.format('analyze %s as well', file_args)
+
+        -- 2. Find the target tmux pane running 'opencode'.
+        -- We ask tmux to list panes with a custom format: "pane_id:command"
+        local find_pane_cmd = 'tmux list-panes -F "#{pane_id}:#{pane_current_command}"'
+        local panes_info = vim.fn.system(find_pane_cmd)
+
+        local target_pane_id = nil
+        -- Loop through the output to find the last pane matching 'opencode'
+        for line in vim.gsplit(panes_info, "\n") do
+          if line:find("opencode") then
+            -- The line is e.g., "%1:opencode". We just need the ID part "%1".
+            target_pane_id = line:match("([^:]+)")
+          end
+        end
+
+        -- 3. If a pane was found, send the command to it.
+        if target_pane_id then
+          -- FIXED: Send commands separately and use proper Enter key
+          -- First, select the pane
+          vim.fn.system(string.format("tmux select-pane -t %s", target_pane_id))
+
+          -- Then send the text
+          vim.fn.system(string.format("tmux send-keys -t %s %s",
+                                    target_pane_id,
+                                    vim.fn.shellescape(opencode_prompt)))
+
+          vim.fn.system(string.format("tmux send-keys -t %s Escape", target_pane_id))
+
+          vim.notify("Sent " .. #selected .. " additional file(s) to existing OpenCode pane and executed.", vim.log.levels.INFO, { title = "OpenCode" })
+        else
+          vim.notify("No active 'opencode' tmux pane found.", vim.log.levels.ERROR, { title = "OpenCode" })
+        end
+      end
+    }
+  })
+end, { desc = "Fuzzy find files and send to EXISTING OpenCode pane with auto-execute" })
