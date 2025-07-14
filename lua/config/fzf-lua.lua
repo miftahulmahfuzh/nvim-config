@@ -149,3 +149,68 @@ vim.keymap.set("n", "<leader>fO", function()
     }
   })
 end, { desc = "Fuzzy find files and send to EXISTING OpenCode pane with auto-execute" })
+
+vim.keymap.set("v", "<leader>z", function()
+  -- 1. Get the visually selected text using a more reliable method
+  -- Save the current register state
+  local old_reg_z = vim.fn.getreg('z')
+  local old_reg_z_type = vim.fn.getregtype('z')
+
+  -- Yank the current visual selection directly into register 'z'
+  vim.cmd('noau normal! "zy')
+  local selected_text = vim.fn.getreg('z')
+
+  -- Restore the register
+  vim.fn.setreg('z', old_reg_z, old_reg_z_type)
+
+  -- Exit if no text was selected
+  if not selected_text or vim.fn.trim(selected_text) == "" then
+    vim.notify("No text selected.", vim.log.levels.WARN, { title = "OpenCode" })
+    return
+  end
+
+  -- 2. Get the full path of the current file
+  -- local file_path = vim.fn.expand('%:p')
+  local file_path = vim.fn.expand('%')
+  if file_path == "" then
+    vim.notify("Cannot get context from an unsaved buffer. Please save the file first.", vim.log.levels.WARN, { title = "OpenCode" })
+    return
+  end
+
+  -- 3. Construct the prompt for OpenCode
+  -- Format it to include both the file context and the selected text
+  local opencode_prompt = string.format(
+    'analyze the following snippet from @%s:\"%s\"',
+    file_path,
+    selected_text
+  )
+
+  -- 4. Find the target 'opencode' tmux pane
+  local find_pane_cmd = 'tmux list-panes -F "#{pane_id}:#{pane_current_command}"'
+  local panes_info = vim.fn.system(find_pane_cmd)
+  local target_pane_id = nil
+
+  for line in vim.gsplit(panes_info, "\n") do
+    if line:find("opencode") then
+      target_pane_id = line:match("([^:]+)")
+    end
+  end
+
+  -- 5. If a pane is found, send the command
+  if target_pane_id then
+    -- Select the target pane to make it active
+    vim.fn.system(string.format("tmux select-pane -t %s", target_pane_id))
+
+    -- Send the properly escaped prompt text to the pane
+    vim.fn.system(string.format("tmux send-keys -t %s %s",
+                                target_pane_id,
+                                vim.fn.shellescape(opencode_prompt)))
+
+    -- Send Escape to execute the command
+    vim.fn.system(string.format("tmux send-keys -t %s Escape", target_pane_id))
+
+    vim.notify("Sent selection from " .. vim.fn.expand('%:t') .. " to OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
+  else
+    vim.notify("No active 'opencode' tmux pane found.", vim.log.levels.ERROR, { title = "OpenCode" })
+  end
+end, { desc = "Send visual selection and file to existing OpenCode pane" })
