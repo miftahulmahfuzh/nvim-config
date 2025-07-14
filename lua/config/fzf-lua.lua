@@ -54,3 +54,48 @@ vim.keymap.set({ "n", "v" }, "<leader>m", function()
     })
   end
 end, { desc = "Grep for word/selection" })
+
+-- opencode keymap
+vim.keymap.set("n", "<leader>fo", function()
+  local fzf = require("fzf-lua")
+  fzf.files({
+    -- This action enables multi-selection with the Tab key and defines
+    -- what happens when you press Enter.
+    actions = {
+      ["default"] = function(selected)
+        -- 'selected' is a table containing the paths of the files you chose.
+        if not selected or #selected == 0 then
+          vim.notify("No files selected.", vim.log.levels.WARN, { title = "OpenCode" })
+          return
+        end
+
+        -- 1. Format each file path with the "@" prefix.
+        local formatted_files = {}
+        for _, file_path in ipairs(selected) do
+          table.insert(formatted_files, "@" .. file_path)
+        end
+
+        -- 2. Join the formatted file paths with " and ".
+        local file_args = table.concat(formatted_files, " and ")
+
+        -- 3. Construct the full 'opencode' command. The outer quotes are
+        --    important for the shell to treat the prompt as a single argument.
+        local opencode_cmd = string.format('opencode -p "analyze %s"', file_args)
+
+        -- 4. Get the current working directory to start the new tmux pane in the same context.
+        local current_dir = vim.fn.getcwd()
+
+        -- 5. Build the final tmux command. We use vim.fn.shellescape to handle
+        --    any special characters in the directory path or the command itself.
+        local tmux_cmd = string.format("tmux split-window -h -c %s %s",
+                                     vim.fn.shellescape(current_dir),
+                                     vim.fn.shellescape(opencode_cmd))
+
+        -- 6. Execute the command system-wide.
+        vim.fn.system(tmux_cmd)
+
+        vim.notify("Sent " .. #selected .. " file(s) to OpenCode in new tmux pane.", vim.log.levels.INFO, { title = "OpenCode" })
+      end
+    }
+  })
+end, { desc = "Fuzzy find files and open with OpenCode in tmux" })
