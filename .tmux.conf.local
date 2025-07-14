@@ -159,7 +159,9 @@ tmux_conf_urlscan_options="--compact --dedupe"
 
 # -- user customizations -------------------------------------------------------
 # Key binding for vertical split and running opencode
-bind-key o split-window -h "/home/devmiftahul/.opencode/bin/opencode"
+# bind-key o split-window -h "/home/devmiftahul/.opencode/bin/opencode"
+# Split window vertically, cd to current path, and run opencode
+bind-key o split-window -h -c "#{pane_current_path}" "/home/devmiftahul/.opencode/bin/opencode"
 
 # -- tpm -----------------------------------------------------------------------
 
