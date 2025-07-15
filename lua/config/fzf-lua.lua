@@ -55,6 +55,8 @@ vim.keymap.set({ "n", "v" }, "<leader>m", function()
   end
 end, { desc = "Grep for word/selection" })
 
+-- OPENCODE SECTION
+
 -- Helper function to find OpenCode tmux pane
 local function find_opencode_pane()
   local find_pane_cmd = 'tmux list-panes -F "#{pane_id}:#{pane_current_command}"'
@@ -68,112 +70,64 @@ local function find_opencode_pane()
   return nil
 end
 
--- Helper function to send files to OpenCode (new window)
-local function send_files_to_new_opencode(selected_files)
-  if not selected_files or #selected_files == 0 then
-    vim.notify("No files selected.", vim.log.levels.WARN, { title = "OpenCode" })
-    return
-  end
-
-  local formatted_files = {}
-  for _, file_path in ipairs(selected_files) do
-    table.insert(formatted_files, "@" .. file_path)
-  end
-  local file_args = table.concat(formatted_files, " and ")
-  local opencode_cmd = string.format('opencode -p "analyze %s"', file_args)
-  local current_dir = vim.fn.getcwd()
-
-  -- Set both PATH and EDITOR environment variables to ensure OpenCode uses the correct nvim
-  local nvim_bin_path = "/opt/nvim-linux-x86_64/bin"
-  local nvim_full_path = "/opt/nvim-linux-x86_64/bin/nvim"
-
-  -- Create a shell command that exports the environment variables and then runs opencode
-  local full_shell_cmd = string.format("export PATH=%s:$PATH && export EDITOR=%s && %s",
-                                       vim.fn.shellescape(nvim_bin_path),
-                                       vim.fn.shellescape(nvim_full_path),
-                                       opencode_cmd)
-
-  -- Build the final tmux command using bash to ensure the export commands work
-  local tmux_cmd = string.format("tmux split-window -h -c %s bash -c %s",
-                                 vim.fn.shellescape(current_dir),
-                                 vim.fn.shellescape(full_shell_cmd))
-
-  vim.fn.system(tmux_cmd)
-  vim.notify("Sent " .. #selected_files .. " file(s) to NEW OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
-end
-
--- Helper function to send files to existing OpenCode
-local function send_files_to_existing_opencode(selected_files)
+-- Smart function to send files to OpenCode (toggles between new/existing)
+local function send_files_to_opencode(selected_files)
   if not selected_files or #selected_files == 0 then
     vim.notify("No files selected.", vim.log.levels.WARN, { title = "OpenCode" })
     return
   end
 
   local target_pane_id = find_opencode_pane()
-  if not target_pane_id then
-    vim.notify("No active 'opencode' tmux pane found. Use <leader>fo to create a new one.", vim.log.levels.ERROR, { title = "OpenCode" })
-    return
+
+  if target_pane_id then
+    -- Existing OpenCode pane found - send to it
+    local formatted_files = {}
+    for _, file_path in ipairs(selected_files) do
+      table.insert(formatted_files, "@" .. vim.fn.fnameescape(file_path))
+    end
+    local file_args = table.concat(formatted_files, " and ")
+    local opencode_prompt = string.format('analyze %s as well', file_args)
+
+    -- Select the pane and send the command
+    vim.fn.system(string.format("tmux select-pane -t %s", target_pane_id))
+    vim.fn.system(string.format("tmux send-keys -t %s %s",
+                                target_pane_id,
+                                vim.fn.shellescape(opencode_prompt)))
+    vim.fn.system(string.format("tmux send-keys -t %s Escape", target_pane_id))
+
+    vim.notify("Sent " .. #selected_files .. " additional file(s) to existing OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
+  else
+    -- No existing OpenCode pane - create new one
+    local formatted_files = {}
+    for _, file_path in ipairs(selected_files) do
+      table.insert(formatted_files, "@" .. file_path)
+    end
+    local file_args = table.concat(formatted_files, " and ")
+    local opencode_cmd = string.format('opencode -p "analyze %s"', file_args)
+    local current_dir = vim.fn.getcwd()
+
+    -- Set both PATH and EDITOR environment variables to ensure OpenCode uses the correct nvim
+    local nvim_bin_path = "/opt/nvim-linux-x86_64/bin"
+    local nvim_full_path = "/opt/nvim-linux-x86_64/bin/nvim"
+
+    -- Create a shell command that exports the environment variables and then runs opencode
+    local full_shell_cmd = string.format("export PATH=%s:$PATH && export EDITOR=%s && %s",
+                                         vim.fn.shellescape(nvim_bin_path),
+                                         vim.fn.shellescape(nvim_full_path),
+                                         opencode_cmd)
+
+    -- Build the final tmux command using bash to ensure the export commands work
+    local tmux_cmd = string.format("tmux split-window -h -c %s bash -c %s",
+                                   vim.fn.shellescape(current_dir),
+                                   vim.fn.shellescape(full_shell_cmd))
+
+    vim.fn.system(tmux_cmd)
+    vim.notify("Sent " .. #selected_files .. " file(s) to NEW OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
   end
-
-  -- Format the file paths and join them into the new prompt string
-  local formatted_files = {}
-  for _, file_path in ipairs(selected_files) do
-    table.insert(formatted_files, "@" .. vim.fn.fnameescape(file_path))
-  end
-  local file_args = table.concat(formatted_files, " and ")
-  local opencode_prompt = string.format('analyze %s as well', file_args)
-
-  -- Select the pane and send the command
-  vim.fn.system(string.format("tmux select-pane -t %s", target_pane_id))
-  vim.fn.system(string.format("tmux send-keys -t %s %s",
-                              target_pane_id,
-                              vim.fn.shellescape(opencode_prompt)))
-  vim.fn.system(string.format("tmux send-keys -t %s Escape", target_pane_id))
-
-  vim.notify("Sent " .. #selected_files .. " additional file(s) to existing OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
 end
 
--- Helper function to send text to OpenCode (new window)
-local function send_text_to_new_opencode(selected_text)
-  if not selected_text or vim.fn.trim(selected_text) == "" then
-    vim.notify("No text selected.", vim.log.levels.WARN, { title = "OpenCode" })
-    return
-  end
-
-  local file_path = vim.fn.expand('%')
-  if file_path == "" then
-    vim.notify("Cannot get context from an unsaved buffer. Please save the file first.", vim.log.levels.WARN, { title = "OpenCode" })
-    return
-  end
-
-  local opencode_prompt = string.format(
-    'analyze the following snippet from @%s : " %s "',
-    file_path,
-    selected_text
-  )
-
-  local opencode_cmd = string.format('opencode -p %s', vim.fn.shellescape(opencode_prompt))
-  local current_dir = vim.fn.getcwd()
-
-  -- Set both PATH and EDITOR environment variables
-  local nvim_bin_path = "/opt/nvim-linux-x86_64/bin"
-  local nvim_full_path = "/opt/nvim-linux-x86_64/bin/nvim"
-
-  local full_shell_cmd = string.format("export PATH=%s:$PATH && export EDITOR=%s && %s",
-                                       vim.fn.shellescape(nvim_bin_path),
-                                       vim.fn.shellescape(nvim_full_path),
-                                       opencode_cmd)
-
-  local tmux_cmd = string.format("tmux split-window -h -c %s bash -c %s",
-                                 vim.fn.shellescape(current_dir),
-                                 vim.fn.shellescape(full_shell_cmd))
-
-  vim.fn.system(tmux_cmd)
-  vim.notify("Sent selection from " .. vim.fn.expand('%:t') .. " to NEW OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
-end
-
--- Helper function to send text to existing OpenCode
-local function send_text_to_existing_opencode(selected_text)
+-- Smart function to send text to OpenCode (toggles between new/existing)
+local function send_text_to_opencode(selected_text)
   if not selected_text or vim.fn.trim(selected_text) == "" then
     vim.notify("No text selected.", vim.log.levels.WARN, { title = "OpenCode" })
     return
@@ -186,25 +140,50 @@ local function send_text_to_existing_opencode(selected_text)
   end
 
   local target_pane_id = find_opencode_pane()
-  if not target_pane_id then
-    vim.notify("No active 'opencode' tmux pane found. Use <leader>z to create a new one.", vim.log.levels.ERROR, { title = "OpenCode" })
-    return
+
+  if target_pane_id then
+    -- Existing OpenCode pane found - send to it
+    local opencode_prompt = string.format(
+      'analyze @%s , then explain the following snippet : " %s "',
+      file_path,
+      selected_text
+    )
+
+    -- Select the pane and send the command
+    vim.fn.system(string.format("tmux select-pane -t %s", target_pane_id))
+    vim.fn.system(string.format("tmux send-keys -t %s %s",
+                                target_pane_id,
+                                vim.fn.shellescape(opencode_prompt)))
+    vim.fn.system(string.format("tmux send-keys -t %s Escape", target_pane_id))
+
+    vim.notify("Sent selection from " .. vim.fn.expand('%:t') .. " to existing OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
+  else
+    -- No existing OpenCode pane - create new one
+    local opencode_prompt = string.format(
+      'analyze @%s , then explain the following snippet : " %s "',
+      file_path,
+      selected_text
+    )
+
+    local opencode_cmd = string.format('opencode -p %s', vim.fn.shellescape(opencode_prompt))
+    local current_dir = vim.fn.getcwd()
+
+    -- Set both PATH and EDITOR environment variables
+    local nvim_bin_path = "/opt/nvim-linux-x86_64/bin"
+    local nvim_full_path = "/opt/nvim-linux-x86_64/bin/nvim"
+
+    local full_shell_cmd = string.format("export PATH=%s:$PATH && export EDITOR=%s && %s",
+                                         vim.fn.shellescape(nvim_bin_path),
+                                         vim.fn.shellescape(nvim_full_path),
+                                         opencode_cmd)
+
+    local tmux_cmd = string.format("tmux split-window -h -c %s bash -c %s",
+                                   vim.fn.shellescape(current_dir),
+                                   vim.fn.shellescape(full_shell_cmd))
+
+    vim.fn.system(tmux_cmd)
+    vim.notify("Sent selection from " .. vim.fn.expand('%:t') .. " to NEW OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
   end
-
-  local opencode_prompt = string.format(
-    'analyze the following snippet from @%s : " %s "',
-    file_path,
-    selected_text
-  )
-
-  -- Select the pane and send the command
-  vim.fn.system(string.format("tmux select-pane -t %s", target_pane_id))
-  vim.fn.system(string.format("tmux send-keys -t %s %s",
-                              target_pane_id,
-                              vim.fn.shellescape(opencode_prompt)))
-  vim.fn.system(string.format("tmux send-keys -t %s Escape", target_pane_id))
-
-  vim.notify("Sent selection from " .. vim.fn.expand('%:t') .. " to existing OpenCode pane.", vim.log.levels.INFO, { title = "OpenCode" })
 end
 
 -- Helper function to get visual selection
@@ -219,34 +198,18 @@ local function get_visual_selection()
   return selected_text
 end
 
--- <leader>fo - Fuzzy find files and open with OpenCode in NEW tmux pane
+-- <leader>fo - Fuzzy find files and open with OpenCode (smart toggle)
 vim.keymap.set("n", "<leader>fo", function()
   local fzf = require("fzf-lua")
   fzf.files({
     actions = {
-      ["default"] = send_files_to_new_opencode
+      ["default"] = send_files_to_opencode
     }
   })
-end, { desc = "Fuzzy find files and open with OpenCode in NEW tmux pane" })
+end, { desc = "Fuzzy find files and open with OpenCode (smart toggle)" })
 
--- <leader>fO - Fuzzy find files and send to EXISTING OpenCode pane
-vim.keymap.set("n", "<leader>fO", function()
-  local fzf = require("fzf-lua")
-  fzf.files({
-    actions = {
-      ["default"] = send_files_to_existing_opencode
-    }
-  })
-end, { desc = "Fuzzy find files and send to EXISTING OpenCode pane" })
-
--- <leader>z - Send visual selection to NEW OpenCode pane
+-- <leader>z - Send visual selection to OpenCode (smart toggle)
 vim.keymap.set("v", "<leader>z", function()
   local selected_text = get_visual_selection()
-  send_text_to_new_opencode(selected_text)
-end, { desc = "Send visual selection to NEW OpenCode pane" })
-
--- <leader>Z - Send visual selection to EXISTING OpenCode pane
-vim.keymap.set("v", "<leader>Z", function()
-  local selected_text = get_visual_selection()
-  send_text_to_existing_opencode(selected_text)
-end, { desc = "Send visual selection to EXISTING OpenCode pane" })
+  send_text_to_opencode(selected_text)
+end, { desc = "Send visual selection to OpenCode (smart toggle)" })
