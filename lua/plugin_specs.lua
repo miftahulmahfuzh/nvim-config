@@ -723,8 +723,7 @@ local plugin_specs = {
     config = function()
       require("mason-tool-installer").setup({
         ensure_installed = {
-          "gofumpt", -- Add gofumpt here
-          "delve", -- Make sure Delve (the Go debugger) is installed
+          "gofumpt"
         },
         auto_update = true,
         run_on_start = true,
@@ -738,7 +737,7 @@ local plugin_specs = {
     config = function()
       require("mason-lspconfig").setup({
         -- A list of servers to automatically install if they're not already installed
-        ensure_installed = { "lua_ls", "yamlls", "bashls" },
+        ensure_installed = { "lua_ls", "yamlls", "bashls", "ruff" },
       })
     end,
   },
