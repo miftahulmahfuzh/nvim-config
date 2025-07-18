@@ -151,16 +151,80 @@ local plugin_specs = {
   },
 
   -- plugins to provide nerdfont icons
-  {
-    "echasnovski/mini.icons",
-    version = false,
-    config = function()
-      -- this is the compatibility fix for plugins that only support nvim-web-devicons
-      require("mini.icons").mock_nvim_web_devicons()
-      require("mini.icons").tweak_lsp_kind()
-    end,
-    lazy = true,
-  },
+  -- plugins to provide nerdfont icons
+{
+  "echasnovski/mini.icons",
+  version = false,
+  config = function()
+    local mini_icons = require("mini.icons")
+    mini_icons.setup({
+      -- Default icon for unconfigured filetypes
+      default = {
+        file = { glyph = '󰈤', hl = 'MiniIconsGrey' },
+        extension = { glyph = '󰈤', hl = 'MiniIconsGrey' },
+      },
+      -- Filetype-specific icons
+      file = {
+        ['.go'] = { glyph = '󰟓', hl = 'MiniIconsBlue' }, -- Go
+        ['.lua'] = { glyph = '󰢱', hl = 'MiniIconsBlue' }, -- Lua
+        ['.py'] = { glyph = '󰌠', hl = 'MiniIconsYellow' }, -- Python
+        ['.js'] = { glyph = '󰌞', hl = 'MiniIconsYellow' }, -- JavaScript
+        ['.ts'] = { glyph = '󰛦', hl = 'MiniIconsBlue' }, -- TypeScript
+        ['.xlsx'] = { glyph = '󰈛', hl = 'MiniIconsGreen' }, -- Excel
+        ['.csv'] = { glyph = '󰈛', hl = 'MiniIconsGreen' }, -- CSV
+        ['.md'] = { glyph = '󰍔', hl = 'MiniIconsBlue' }, -- Markdown
+        ['.json'] = { glyph = '󰘦', hl = 'MiniIconsYellow' }, -- JSON
+        ['.yaml'] = { glyph = '󰈙', hl = 'MiniIconsOrange' }, -- YAML
+        ['.yml'] = { glyph = '󰈙', hl = 'MiniIconsOrange' }, -- YAML
+        ['.toml'] = { glyph = '󰅚', hl = 'MiniIconsOrange' }, -- TOML
+        ['.sh'] = { glyph = '󰐣', hl = 'MiniIconsGreen' }, -- Shell script
+        ['.cpp'] = { glyph = '󰙲', hl = 'MiniIconsBlue' }, -- C++
+        ['.c'] = { glyph = '󰙱', hl = 'MiniIconsBlue' }, -- C
+        ['.rs'] = { glyph = '󱘗', hl = 'MiniIconsRed' }, -- Rust
+        ['.java'] = { glyph = '󰬷', hl = 'MiniIconsRed' }, -- Java
+        ['.html'] = { glyph = '󰌝', hl = 'MiniIconsOrange' }, -- HTML
+        ['.css'] = { glyph = '󰌜', hl = 'MiniIconsBlue' }, -- CSS
+        ['.rb'] = { glyph = '󰴭', hl = 'MiniIconsRed' }, -- Ruby
+        ['.php'] = { glyph = '󰌟', hl = 'MiniIconsPurple' }, -- PHP
+        ['.sql'] = { glyph = '󰆼', hl = 'MiniIconsBlue' }, -- SQL
+        ['.Dockerfile'] = { glyph = '󰡨', hl = 'MiniIconsBlue' }, -- Dockerfile
+        ['.gitignore'] = { glyph = '󰊢', hl = 'MiniIconsGrey' }, -- Gitignore
+      },
+      extension = {
+        go = { glyph = '󰟓', hl = 'MiniIconsBlue' },
+        lua = { glyph = '󰢱', hl = 'MiniIconsBlue' },
+        py = { glyph = '󰌠', hl = 'MiniIconsYellow' },
+        js = { glyph = '󰌞', hl = 'MiniIconsYellow' },
+        ts = { glyph = '󰛦', hl = 'MiniIconsBlue' },
+        xlsx = { glyph = '󰈛', hl = 'MiniIconsGreen' },
+        csv = { glyph = '󰈛', hl = 'MiniIconsGreen' },
+        md = { glyph = '󰍔', hl = 'MiniIconsBlue' },
+        json = { glyph = '󰘦', hl = 'MiniIconsYellow' },
+        yaml = { glyph = '󰈙', hl = 'MiniIconsOrange' },
+        yml = { glyph = '󰈙', hl = 'MiniIconsOrange' },
+        toml = { glyph = '󰅚', hl = 'MiniIconsOrange' },
+        sh = { glyph = '󰐣', hl = 'MiniIconsGreen' },
+        cpp = { glyph = '󰙲', hl = 'MiniIconsBlue' },
+        c = { glyph = '󰙱', hl = 'MiniIconsBlue' },
+        rs = { glyph = '󱘗', hl = 'MiniIconsRed' },
+        java = { glyph = '󰬷', hl = 'MiniIconsRed' },
+        html = { glyph = '󰌝', hl = 'MiniIconsOrange' },
+        css = { glyph = '󰌜', hl = 'MiniIconsBlue' },
+        rb = { glyph = '󰴭', hl = 'MiniIconsRed' },
+        php = { glyph = '󰌟', hl = 'MiniIconsPurple' },
+        sql = { glyph = '󰆼', hl = 'MiniIconsBlue' },
+        Dockerfile = { glyph = '󰡨', hl = 'MiniIconsBlue' },
+        gitignore = { glyph = '󰊢', hl = 'MiniIconsGrey' },
+      },
+    })
+
+    -- Compatibility fix for plugins expecting nvim-web-devicons
+    mini_icons.mock_nvim_web_devicons()
+    mini_icons.tweak_lsp_kind()
+  end,
+  lazy = false, -- Load immediately to ensure icons are available
+  priority = 1000, -- High priority to load early
+},
 
   {
     "nvim-lualine/lualine.nvim",
