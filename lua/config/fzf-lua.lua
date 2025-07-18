@@ -1,15 +1,32 @@
 -- /home/devmiftahul/.config/nvim/lua/config/fzf-lua.lua
 
+-- import the standard fzf-lua actions module
+local actions = require("fzf-lua.actions")
+
 require("fzf-lua").setup {
   defaults = {
     file_icons = "mini",
+    -- This table maps keybindings within the fzf window to specific functions.
+    -- By placing it in 'defaults', these bindings will work for any provider
+    -- that opens files (e.g., 'files', 'buffers', 'oldfiles').
+    actions = {
+      -- The default action for <CR> (Enter) is to open in the current window.
+      ["default"] = actions.file_edit,
+      -- Your custom request: <C-x> opens the file in a horizontal split.
+      ["ctrl-x"] = actions.file_split,
+      -- Your custom request: <C-l> opens the file in a vertical split.
+      -- Note: The default for vsplit is often <C-v>, so we'll add that too.
+      ["ctrl-l"] = actions.file_vsplit,
+      -- A useful bonus: <C-t> opens the file in a new tab.
+      ["ctrl-t"] = actions.file_tabedit,
+    },
   },
   winopts = {
     row = 0.5,
     height = 0.7,
   },
   files = {
-    previewer = false,
+    previewer = true,
   },
 }
 
