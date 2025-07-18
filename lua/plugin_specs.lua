@@ -1,5 +1,3 @@
--- /home/devmiftahul/.config/nvim/lua/plugin_specs.lua
-
 local utils = require("utils")
 
 local plugin_dir = vim.fn.stdpath("data") .. "/lazy"
@@ -114,131 +112,14 @@ local plugin_specs = {
     end,
     event = "VeryLazy",
   },
-  -- Updated render-markdown configuration
-{
-  "MeanderingProgrammer/markdown.nvim",
-  main = "render-markdown",
-  opts = {
-    -- Enable rendering for Avante buffers
-    file_types = { "markdown", "Avante" },
-    -- Configure how markdown is rendered
-    render_modes = { "n", "v", "i", "c" },
-    -- Enable anti-conceal to show markdown syntax when cursor is on line
-    anti_conceal = {
-      enabled = true,
-    },
-    -- Configure headings
-    heading = {
-      enabled = true,
-      sign = true,
-      icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
-    },
-    -- Configure code blocks
-    code = {
-      enabled = true,
-      sign = true,
-      style = "full",
-      position = "left",
-      language_pad = 0,
-      disable_background = { "diff" },
-      width = "full",
-      left_pad = 0,
-      right_pad = 0,
-      min_width = 0,
-      border = "thin",
-      above = "▄",
-      below = "▀",
-      highlight = "RenderMarkdownCode",
-      highlight_inline = "RenderMarkdownCodeInline",
-    },
-    -- Configure dash/bullet points
-    dash = {
-      enabled = true,
-      icon = "─",
-      width = 4,
-      highlight = "RenderMarkdownDash",
-    },
-    -- Configure bullet points
-    bullet = {
-      enabled = true,
-      icons = { "●", "○", "◆", "◇" },
-      left_pad = 0,
-      right_pad = 0,
-      highlight = "RenderMarkdownBullet",
-    },
-    -- Configure checkboxes
-    checkbox = {
-      enabled = true,
-      unchecked = {
-        icon = "󰄱 ",
-        highlight = "RenderMarkdownUnchecked",
-      },
-      checked = {
-        icon = "󰱒 ",
-        highlight = "RenderMarkdownChecked",
-      },
-      custom = {
-        todo = { raw = "[-]", rendered = "󰥔 ", highlight = "RenderMarkdownTodo" },
-      },
-    },
-    -- Configure quotes
-    quote = {
-      enabled = true,
-      icon = "▋",
-      repeat_linebreak = false,
-      highlight = "RenderMarkdownQuote",
-    },
-    -- Configure tables
-    pipe_table = {
-      enabled = true,
-      preset = "none",
-      style = "full",
-      cell = "padded",
-      min_width = 0,
-      border = {
-        "┌", "┬", "┐",
-        "├", "┼", "┤",
-        "└", "┴", "┘",
-        "│", "─",
-      },
-      alignment_indicator = "━",
-      head = "RenderMarkdownTableHead",
-      row = "RenderMarkdownTableRow",
-      filler = "RenderMarkdownTableFill",
-    },
-    -- Configure callouts (for things like > [!NOTE])
-    callout = {
-      note = { raw = "[!NOTE]", rendered = "󰋽 Note", highlight = "RenderMarkdownInfo" },
-      tip = { raw = "[!TIP]", rendered = "󰌶 Tip", highlight = "RenderMarkdownSuccess" },
-      important = { raw = "[!IMPORTANT]", rendered = "󰅾 Important", highlight = "RenderMarkdownHint" },
-      warning = { raw = "[!WARNING]", rendered = "󰀪 Warning", highlight = "RenderMarkdownWarn" },
-      caution = { raw = "[!CAUTION]", rendered = "󰳦 Caution", highlight = "RenderMarkdownError" },
-    },
-    -- Configure links
-    link = {
-      enabled = true,
-      image = "󰥶 ",
-      hyperlink = "󰌹 ",
-      highlight = "RenderMarkdownLink",
-      custom = {
-        web = { pattern = "^http[s]?://", icon = "󰖟 ", highlight = "RenderMarkdownLink" },
-      },
-    },
-    -- Configure inline highlighting
-    inline_highlight = {
-      enabled = true,
-    },
-    -- Configure latex
-    latex = {
-      enabled = true,
-      converter = "latex2text",
-      highlight = "RenderMarkdownMath",
-      top_pad = 0,
-      bottom_pad = 0,
-    },
+  -- Simplified markdown rendering
+  {
+    "MeanderingProgrammer/markdown.nvim",
+    main = "render-markdown",
+    name = "render-markdown", -- let's use the same name as the main file for clarity
+    ft = "markdown",
+    opts = {}, -- The defaults are sane. Stop over-configuring.
   },
-  ft = { "markdown", "Avante" },
-},
   -- A list of colorscheme plugin you may want to try. Find what suits you.
   { "navarasu/onedark.nvim", lazy = true },
   { "sainnhe/edge", lazy = true },
@@ -602,95 +483,8 @@ local plugin_specs = {
       },
     },
   },
-  -- Updated Avante configuration with markdown rendering
-{
-  "yetone/avante.nvim",
-  event = "VeryLazy",
-  version = false, -- Never set this value to "*"! Never!
-  opts = {
-    provider = "openai",
-    auto_suggestions_provider = "openai",
-    providers = {
-      openai = {
-        -- endpoint = "https://api.openai.com/v1",
-        -- model = "gpt-4o-mini",
-        endpoint = "https://api.deepseek.com/v1",
-        model = "deepseek-chat",
-        timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
-        extra_request_body = {
-          temperature = 0,
-          -- max_completion_tokens = 16384, -- for gpt-4o-mini
-          max_completion_tokens = 128000, -- for deepseek
-        },
-      },
-    },
-    web_search_engine = {
-      provider = "tavily", -- tavily, serpapi, searchapi, google, kagi, brave, or searxng
-      proxy = nil, -- proxy support, e.g., http://127.0.0.1:7890
-    },
-    -- Enable markdown rendering in the sidebar
-    sidebar = {
-      width = 30,
-      border = "rounded",
-      -- Enable markdown rendering for the sidebar
-      render = {
-        markdown = true,
-        -- Optional: customize markdown rendering
-        signs = {
-          submit = "󰒖",
-          switch = "󰌽",
-        },
-      },
-    },
-    -- Configure the chat window to use markdown
-    chat = {
-      -- Enable markdown rendering in chat
-      markdown = true,
-      -- Use treesitter for syntax highlighting
-      treesitter = true,
-    },
-    -- Configure windows to support markdown
-    windows = {
-      -- Enable markdown rendering in all avante windows
-      markdown = true,
-      -- Set the filetype for avante buffers to support markdown
-      filetype = "Avante",
-    },
-    -- Optional: Configure highlights for better markdown display
-    highlights = {
-      diff = {
-        current = "DiffText",
-        incoming = "DiffAdd",
-      },
-    },
-    -- Enable conceal for markdown elements (hides markup characters)
-    conceal = {
-      enabled = true,
-      -- Conceal level for markdown (0-3)
-      level = 2,
-    },
-  },
-  -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
-  build = "make",
-  -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
-  dependencies = {
-    "nvim-treesitter/nvim-treesitter",
-    "stevearc/dressing.nvim",
-    "nvim-lua/plenary.nvim",
-    "MunifTanjim/nui.nvim",
-    --- The below dependencies are optional,
-    "echasnovski/mini.pick", -- for file_selector provider mini.pick
-    "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
-    "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
-    "ibhagwan/fzf-lua", -- for file_selector provider fzf
-    "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-    "MeanderingProgrammer/markdown.nvim", -- Add this as explicit dependency
-  },
-},
   {
     "smjonas/live-command.nvim",
-    -- live-command supports semantic versioning via Git tags
-    -- tag = "2.*",
     event = "VeryLazy",
     config = function()
       require("config.live-command")
@@ -703,8 +497,7 @@ local plugin_specs = {
   {
     "catgoose/nvim-colorizer.lua",
     event = "BufReadPre",
-    opts = { -- set to setup table
-    },
+    opts = {},
   },
 
   -- Personal addition
@@ -723,7 +516,7 @@ local plugin_specs = {
     config = function()
       require("mason-tool-installer").setup({
         ensure_installed = {
-          "gofumpt"
+          "gofumpt",
         },
         auto_update = true,
         run_on_start = true,
