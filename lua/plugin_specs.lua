@@ -151,19 +151,12 @@ local plugin_specs = {
   },
 
   -- plugins to provide nerdfont icons
-  -- plugins to provide nerdfont icons
 {
   "echasnovski/mini.icons",
   version = false,
   config = function()
     local mini_icons = require("mini.icons")
     mini_icons.setup({
-      -- Default icon for unconfigured filetypes
-      default = {
-        file = { glyph = '󰈤', hl = 'MiniIconsGrey' },
-        extension = { glyph = '󰈤', hl = 'MiniIconsGrey' },
-      },
-      -- Filetype-specific icons
       file = {
         ['.go'] = { glyph = '󰟓', hl = 'MiniIconsBlue' }, -- Go
         ['.lua'] = { glyph = '󰢱', hl = 'MiniIconsBlue' }, -- Lua
