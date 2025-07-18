@@ -1,12 +1,14 @@
-require("git-conflict").setup {}
+-- /home/devmiftahul/.config/nvim/lua/config/git-conflict.lua
+
+require("git-conflict").setup({})
 
 vim.api.nvim_create_autocmd("User", {
-  pattern = "GitConflictResolved",
-  callback = function()
-    -- clear qf list
-    vim.fn.setqflist({}, "r")
+	pattern = "GitConflictResolved",
+	callback = function()
+		-- clear qf list
+		vim.fn.setqflist({}, "r")
 
-    -- reopen it?
-    vim.cmd([[silent! GitConflictListQf]])
-  end,
+		-- reopen it?
+		vim.cmd([[silent! GitConflictListQf]])
+	end,
 })
