@@ -15,11 +15,13 @@ vim.api.nvim_create_autocmd("LspAttach", {
     local filetype = vim.bo[bufnr].filetype
 
     -- Prevent LSP from attaching to fugitive buffers and other special buffers
-    if filetype == 'fugitive' or
-       filetype == 'git' or
-       filetype == 'gitcommit' or
-       filetype == 'gitrebase' or
-       (buf_uri and not buf_uri:match("^file://")) then
+    if
+      filetype == "fugitive"
+      or filetype == "git"
+      or filetype == "gitcommit"
+      or filetype == "gitrebase"
+      or (buf_uri and not buf_uri:match("^file://"))
+    then
       if client then
         -- Detach the client from this buffer to stop any further communication
         vim.lsp.buf_detach_client(bufnr, client.id)
@@ -147,7 +149,7 @@ vim.api.nvim_create_autocmd("FileType", {
   callback = function(event)
     local bufnr = event.buf
     -- Get all attached clients and detach them
-    local clients = vim.lsp.get_clients({ bufnr = bufnr })
+    local clients = vim.lsp.get_clients { bufnr = bufnr }
     for _, client in ipairs(clients) do
       vim.lsp.buf_detach_client(bufnr, client.id)
     end
