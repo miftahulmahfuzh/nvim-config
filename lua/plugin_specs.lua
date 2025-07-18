@@ -190,32 +190,6 @@ local plugin_specs = {
         ['.Dockerfile'] = { glyph = '󰡨', hl = 'MiniIconsBlue' }, -- Dockerfile
         ['.gitignore'] = { glyph = '󰊢', hl = 'MiniIconsGrey' }, -- Gitignore
       },
-      extension = {
-        go = { glyph = '󰟓', hl = 'MiniIconsBlue' },
-        lua = { glyph = '󰢱', hl = 'MiniIconsBlue' },
-        py = { glyph = '󰌠', hl = 'MiniIconsYellow' },
-        js = { glyph = '󰌞', hl = 'MiniIconsYellow' },
-        ts = { glyph = '󰛦', hl = 'MiniIconsBlue' },
-        xlsx = { glyph = '󰈛', hl = 'MiniIconsGreen' },
-        csv = { glyph = '󰈛', hl = 'MiniIconsGreen' },
-        md = { glyph = '󰍔', hl = 'MiniIconsBlue' },
-        json = { glyph = '󰘦', hl = 'MiniIconsYellow' },
-        yaml = { glyph = '󰈙', hl = 'MiniIconsOrange' },
-        yml = { glyph = '󰈙', hl = 'MiniIconsOrange' },
-        toml = { glyph = '󰅚', hl = 'MiniIconsOrange' },
-        sh = { glyph = '󰐣', hl = 'MiniIconsGreen' },
-        cpp = { glyph = '󰙲', hl = 'MiniIconsBlue' },
-        c = { glyph = '󰙱', hl = 'MiniIconsBlue' },
-        rs = { glyph = '󱘗', hl = 'MiniIconsRed' },
-        java = { glyph = '󰬷', hl = 'MiniIconsRed' },
-        html = { glyph = '󰌝', hl = 'MiniIconsOrange' },
-        css = { glyph = '󰌜', hl = 'MiniIconsBlue' },
-        rb = { glyph = '󰴭', hl = 'MiniIconsRed' },
-        php = { glyph = '󰌟', hl = 'MiniIconsPurple' },
-        sql = { glyph = '󰆼', hl = 'MiniIconsBlue' },
-        Dockerfile = { glyph = '󰡨', hl = 'MiniIconsBlue' },
-        gitignore = { glyph = '󰊢', hl = 'MiniIconsGrey' },
-      },
     })
 
     -- Compatibility fix for plugins expecting nvim-web-devicons
