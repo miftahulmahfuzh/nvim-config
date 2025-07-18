@@ -1,3 +1,5 @@
+-- /home/devmiftahul/.config/nvim/lua/plugin_specs.lua
+
 local utils = require("utils")
 
 local plugin_dir = vim.fn.stdpath("data") .. "/lazy"
@@ -121,26 +123,26 @@ local plugin_specs = {
     opts = {}, -- The defaults are sane. Stop over-configuring.
   },
   -- A list of colorscheme plugin you may want to try. Find what suits you.
-  { "navarasu/onedark.nvim", lazy = true },
-  { "sainnhe/edge", lazy = true },
-  { "sainnhe/sonokai", lazy = true },
-  { "sainnhe/gruvbox-material", lazy = true },
-  { "sainnhe/everforest", lazy = true },
-  { "EdenEast/nightfox.nvim", lazy = true },
-  { "catppuccin/nvim", name = "catppuccin", lazy = true },
-  { "olimorris/onedarkpro.nvim", lazy = true },
-  { "marko-cerovac/material.nvim", lazy = true },
-  { "rebelot/kanagawa.nvim", lazy = true },
-  { "miikanissi/modus-themes.nvim", lazy = true },
-  { "wtfox/jellybeans.nvim", lazy = true },
-  { "projekt0n/github-nvim-theme", name = "github-theme", lazy = true },
-  { "e-ink-colorscheme/e-ink.nvim", lazy = true },
-  { "ficcdaf/ashen.nvim", lazy = true },
-  { "savq/melange-nvim", lazy = true },
-  { "Skardyy/makurai-nvim", lazy = true },
-  { "vague2k/vague.nvim", lazy = true },
-  { "webhooked/kanso.nvim", lazy = true },
-  { "zootedb0t/citruszest.nvim", lazy = true },
+  { "navarasu/onedark.nvim" },
+  { "sainnhe/edge" },
+  { "sainnhe/sonokai" },
+  { "sainnhe/gruvbox-material" },
+  { "sainnhe/everforest" },
+  { "EdenEast/nightfox.nvim" },
+  { "catppuccin/nvim", name = "catppuccin" },
+  { "olimorris/onedarkpro.nvim" },
+  { "marko-cerovac/material.nvim" },
+  { "rebelot/kanagawa.nvim" },
+  { "miikanissi/modus-themes.nvim" },
+  { "wtfox/jellybeans.nvim" },
+  { "projekt0n/github-nvim-theme", name = "github-theme" },
+  { "e-ink-colorscheme/e-ink.nvim" },
+  { "ficcdaf/ashen.nvim" },
+  { "savq/melange-nvim" },
+  { "Skardyy/makurai-nvim" },
+  { "vague2k/vague.nvim" },
+  { "webhooked/kanso.nvim" },
+  { "zootedb0t/citruszest.nvim" },
   {
     "rockyzhang24/arctic.nvim",
     dependencies = { "rktjmp/lush.nvim" },

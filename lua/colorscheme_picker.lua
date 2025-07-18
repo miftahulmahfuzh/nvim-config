@@ -4,13 +4,15 @@ local M = {}
 
 --- Opens a popup window to select a colorscheme.
 function M.open()
-  -- Get all available colorschemes
-  local colorschemes = vim.fn.getcompletion("", "color") -- [2]
+  -- Get all available colorschemes.
+  -- This will now work correctly after the fix in lazy.nvim config.
+  local colorschemes = vim.fn.getcompletion("", "color")
 
-  -- Get the current colorscheme
-  local current_colorscheme = vim.g.colors_name or "default" -- [3]
+  -- Sort the list alphabetically for easier navigation
+  table.sort(colorschemes)
 
-  -- Create a prompt for the popup window
+  -- Get the current colorscheme to display it
+  local current_colorscheme = vim.g.colors_name or "default"
   local prompt = "Current: " .. current_colorscheme
 
   vim.ui.select(colorschemes, {
@@ -19,20 +21,21 @@ function M.open()
       return item
     end,
   }, function(choice)
+    -- If the user aborted (pressed <esc>), do nothing
     if not choice then
+      print("Colorscheme selection canceled.")
       return
     end
 
-    -- The user's `colorschemes.lua` file handles the specific setup for each theme.
-    -- We'll try to call the corresponding function from there.
-    local colorscheme_conf = require("colorschemes").colorscheme_conf
-    local colorscheme_name = choice:gsub("%-", "_") -- Normalize names like gruvbox-material
+    -- Use a protected call to catch errors if a colorscheme fails to load
+    local success, err = pcall(vim.cmd, "colorscheme " .. choice)
 
-    if colorscheme_conf[colorscheme_name] then
-      colorscheme_conf[colorscheme_name]()
+    if not success then
+      vim.notify("Error setting colorscheme: " .. err, vim.log.levels.ERROR)
     else
-      -- Fallback for themes not in the custom config
-      vim.cmd("colorscheme " .. choice)
+      vim.notify("Colorscheme set to: " .. choice, vim.log.levels.INFO)
+      -- Update the global variable so the prompt is correct next time
+      vim.g.colors_name = choice
     end
   end)
 end
