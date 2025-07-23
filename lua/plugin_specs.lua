@@ -551,6 +551,7 @@ local plugin_specs = {
 				ensure_installed = {
 					"gofumpt",
 					"stylua",
+					"prettierd",
 				},
 				auto_update = true,
 				run_on_start = true,
@@ -564,7 +565,7 @@ local plugin_specs = {
 		config = function()
 			require("mason-lspconfig").setup({
 				-- A list of servers to automatically install if they're not already installed
-				ensure_installed = { "lua_ls", "yamlls", "bashls", "ruff" },
+				ensure_installed = { "lua_ls", "yamlls", "bashls", "ruff", "ts_ls" },
 			})
 		end,
 	},
