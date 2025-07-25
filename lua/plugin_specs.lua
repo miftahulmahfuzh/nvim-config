@@ -167,9 +167,9 @@ local plugin_specs = {
 					[".csv"] = { glyph = "󰈛", hl = "MiniIconsGreen" }, -- CSV
 					[".md"] = { glyph = "󰍔", hl = "MiniIconsBlue" }, -- Markdown
 					[".json"] = { glyph = "󰘦", hl = "MiniIconsYellow" }, -- JSON
-					[".yaml"] = { glyph = "󰈙", hl = "MiniIconsOrange" }, -- YAML
-					[".yml"] = { glyph = "󰈙", hl = "MiniIconsOrange" }, -- YAML
-					[".toml"] = { glyph = "󰅚", hl = "MiniIconsOrange" }, -- TOML
+					[".yaml"] = { glyph = "󰈼", hl = "MiniIconsOrange" }, -- YAML
+					[".yml"] = { glyph = "󰈼", hl = "MiniIconsOrange" }, -- YAML
+					[".toml"] = { glyph = "󰬷", hl = "MiniIconsOrange" }, -- TOML
 					[".sh"] = { glyph = "󰐣", hl = "MiniIconsGreen" }, -- Shell script
 					[".cpp"] = { glyph = "󰙲", hl = "MiniIconsBlue" }, -- C++
 					[".c"] = { glyph = "󰙱", hl = "MiniIconsBlue" }, -- C
