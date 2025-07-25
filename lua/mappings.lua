@@ -262,6 +262,14 @@ keymap.set("n", "<leader>l", function()
 	end
 end, { desc = "Toggle Avante window size", silent = true })
 
+-- Direct tab navigation
+for i = 1, 9 do
+	keymap.set("n", "<leader>" .. i, "<cmd>tabnext " .. i .. "<cr>", {
+		desc = "Go to tab " .. i,
+		silent = true,
+	})
+end
+
 -- Use Esc to quit builtin terminal
 keymap.set("t", "<Esc>", [[<c-\><c-n>]])
 
