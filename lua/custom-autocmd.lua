@@ -260,7 +260,7 @@ api.nvim_create_autocmd("BufWritePre", {
 api.nvim_create_autocmd("BufWritePre", {
 	group = api.nvim_create_augroup("auto_format_prettierd_on_save", { clear = true }),
 	pattern = {
-		"*.html",
+		-- "*.html",
 		"*.css",
 		"*.javascript",
 		"*.javascriptreact",
