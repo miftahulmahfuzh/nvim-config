@@ -256,10 +256,12 @@ api.nvim_create_autocmd("BufWritePre", {
 	end,
 })
 
--- Format JS and TS files with prettierd on save
+-- Format JS, TS, HTML, CSS files with prettierd on save
 api.nvim_create_autocmd("BufWritePre", {
-	group = api.nvim_create_augroup("auto_format_js_on_save", { clear = true }),
+	group = api.nvim_create_augroup("auto_format_prettierd_on_save", { clear = true }),
 	pattern = {
+		"*.html",
+		"*.css",
 		"*.javascript",
 		"*.javascriptreact",
 		"*.typescript",
@@ -269,7 +271,7 @@ api.nvim_create_autocmd("BufWritePre", {
 		"*.ts",
 		"*.tsx",
 	},
-	desc = "Format JS/TS file with prettierd on save",
+	desc = "Format web development files with prettierd on save",
 	callback = function()
 		local cursor_pos = vim.api.nvim_win_get_cursor(0)
 		vim.cmd("silent %!prettierd %")
