@@ -143,11 +143,20 @@ end, { desc = "Change CWD to dir & copy full file path" })
 
 -- Git shortcuts (requires a plugin like vim-fugitive)
 keymap.set("n", "<leader>gt", "<cmd>Git status<cr>", { silent = true, desc = "Git status" })
-keymap.set("n", "<leader>gd", "<cmd>Gdiffsplit<cr>", { silent = true, desc = "Git diff split" })
 keymap.set("n", "<leader>ga", "<cmd>Git add .<cr>", { silent = true, desc = "Git add all" })
 keymap.set("n", "<leader>gc", "<cmd>Git commit<cr>", { silent = true, desc = "Git commit" })
 keymap.set("n", "<leader>gp", "<cmd>Git push<cr>", { silent = true, desc = "Git push" })
 vim.keymap.set("n", "<leader>gf", ":Flog -all<CR>", { desc = "Git: Flog all" })
+
+keymap.set("n", "<leader>gd", function()
+	require("gitsigns").diffthis()
+end, { desc = "Git Diff" })
+
+-- Quit diff mode and close extra window
+keymap.set("n", "<leader>ds", "<cmd>diffoff! | only<cr>", {
+	silent = true,
+	desc = "quit diff and close window",
+})
 
 -- Simple search and replace for visually selected text
 keymap.set("x", "<leader>r", function()
