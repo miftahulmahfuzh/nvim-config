@@ -27,13 +27,57 @@ gitlinker.setup({
 			end
 			return url
 		end,
+		-- GitLab support
+		["git.tuntun.co.id"] = function(url_data)
+			vim.print(url_data)
+			local url = require("gitlinker.hosts").get_base_https_url(url_data)
+
+			-- GitLab uses /-/blob/ instead of /blob/
+			url = url .. "/-/blob/" .. url_data.rev .. "/" .. url_data.file
+
+			if url_data.lstart then
+				if url_data.lend == nil then
+					url_data.lend = url_data.lstart
+				end
+				-- GitLab uses #L for line numbers
+				url = url .. "#L" .. url_data.lstart
+				-- If there's a range, add the end line
+				if url_data.lend ~= url_data.lstart then
+					url = url .. "-" .. url_data.lend
+				end
+			end
+			return url
+		end,
+		-- Generic GitLab support for other GitLab instances
+		["gitlab.com"] = function(url_data)
+			vim.print(url_data)
+			local url = require("gitlinker.hosts").get_base_https_url(url_data)
+
+			-- GitLab uses /-/blob/ instead of /blob/
+			url = url .. "/-/blob/" .. url_data.rev .. "/" .. url_data.file
+
+			if url_data.lstart then
+				if url_data.lend == nil then
+					url_data.lend = url_data.lstart
+				end
+				-- GitLab uses #L for line numbers
+				url = url .. "#L" .. url_data.lstart
+				-- If there's a range, add the end line
+				if url_data.lend ~= url_data.lstart then
+					url = url .. "-" .. url_data.lend
+				end
+			end
+			return url
+		end,
 	},
 	mappings = nil,
 })
 
 keymap.set({ "n", "v" }, "<leader>gl", function()
 	local mode = string.lower(vim.fn.mode())
-	gitlinker.get_buf_range_url(mode)
+	gitlinker.get_buf_range_url(mode, {
+		action_callback = gitlinker.actions.copy_to_clipboard,
+	})
 end, {
 	silent = true,
 	desc = "Git: get permlink",
