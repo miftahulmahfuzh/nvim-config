@@ -33,13 +33,23 @@ local plugin_specs = {
 	{
 		"hrsh7th/nvim-cmp",
 		name = "nvim-cmp",
-		event = "VeryLazy",
+		event = "InsertEnter", -- Changed from VeryLazy to be more specific
+		dependencies = {
+			"hrsh7th/cmp-nvim-lsp",
+			"hrsh7th/cmp-path",
+			"hrsh7th/cmp-buffer",
+		},
 		config = function()
 			require("config.nvim-cmp")
 		end,
 	},
 	{
 		"neovim/nvim-lspconfig",
+		dependencies = {
+			-- This is the critical change. It ensures mason-lspconfig runs before lspconfig.
+			"williamboman/mason-lspconfig.nvim",
+			"williamboman/mason.nvim",
+		},
 		config = function()
 			require("config.lsp")
 		end,
@@ -536,7 +546,7 @@ local plugin_specs = {
 	-- Personal addition
 	{
 		"williamboman/mason.nvim",
-		cmd = "Mason",
+		-- Removed `cmd` so it loads on startup as a dependency for other plugins.
 		config = function()
 			require("mason").setup()
 			-- Ensure gofumpt is installed
@@ -560,12 +570,11 @@ local plugin_specs = {
 	},
 	{
 		"williamboman/mason-lspconfig.nvim",
-		-- This plugin makes sure that your lspconfig is aware of servers installed with mason
-		dependencies = { "williamboman/mason.nvim", "neovim/nvim-lspconfig" },
+		-- This plugin is now a dependency of nvim-lspconfig, ensuring it loads first.
 		config = function()
 			require("mason-lspconfig").setup({
 				-- A list of servers to automatically install if they're not already installed
-				ensure_installed = { "lua_ls", "yamlls", "bashls", "ruff", "ts_ls", "gopls", "html", "cssls" },
+				ensure_installed = { "lua_ls", "yamlls", "bashls", "ruff", "pyright", "gopls", "html", "cssls" },
 			})
 		end,
 	},
