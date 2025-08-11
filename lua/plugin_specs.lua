@@ -79,28 +79,6 @@ local plugin_specs = {
 	},
 	{ "machakann/vim-swap", event = "VeryLazy" },
 
-	-- IDE for Lisp
-	-- 'kovisoft/slimv'
-	{
-		"vlime/vlime",
-		enabled = function()
-			return utils.executable("sbcl")
-		end,
-		config = function(plugin)
-			vim.opt.rtp:append(plugin.dir .. "/vim")
-		end,
-		ft = { "lisp" },
-	},
-
-	-- Super fast buffer jump
-	{
-		"smoka7/hop.nvim",
-		keys = { "f" },
-		config = function()
-			require("config.nvim_hop")
-		end,
-	},
-
 	-- Show match number and index for searching
 	{
 		"kevinhwang91/nvim-hlslens",
