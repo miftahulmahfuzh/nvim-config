@@ -158,6 +158,32 @@ keymap.set("n", "<leader>ds", "<cmd>diffoff! | only<cr>", {
 	desc = "quit diff and close window",
 })
 
+-- Git tag utilities (add after your existing git mappings)
+local git_tags = require("custom.git_tags")
+
+-- Show tag interactively
+keymap.set("n", "<leader>gts", git_tags.select_and_show_tag, { desc = "Git: Select and show tag" })
+
+-- List all tags with details
+keymap.set("n", "<leader>gtl", git_tags.list_tags_detailed, { desc = "Git: List tags with details" })
+
+-- Compare two tags
+keymap.set("n", "<leader>gtc", git_tags.compare_tags, { desc = "Git: Compare tags" })
+
+-- Quick show tag (prompts for input)
+keymap.set("n", "<leader>gts", function()
+	local tag = vim.fn.input("Show tag: ")
+	if tag ~= "" then
+		git_tags.show_tag(tag)
+	end
+end, { desc = "Git: Show specific tag" })
+
+-- Show tag under cursor
+keymap.set("n", "<leader>gtS", function()
+	local word = vim.fn.expand("<cword>")
+	git_tags.show_tag(word)
+end, { desc = "Git: Show tag under cursor" })
+
 -- Simple search and replace for visually selected text
 keymap.set("x", "<leader>r", function()
 	-- Get the selected text using a simpler method
