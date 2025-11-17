@@ -279,32 +279,95 @@ api.nvim_create_autocmd("BufWritePre", {
 	end,
 })
 
--- Format Python files with ruff on save (with error handling)
+-- Create diagnostic namespace for Python syntax errors
+local python_syntax_ns = vim.api.nvim_create_namespace("python_syntax_errors")
+
+-- Helper function to parse Python compilation errors
+local function parse_python_syntax_error(error_output, filename)
+	local diagnostics = {}
+
+	-- Pattern to match Python syntax errors like:
+	-- File "test.py", line 5
+	--   print("hello"
+	--          ^
+	-- SyntaxError: EOL while scanning string literal
+	for line_num, content, marker, error_msg in error_output:gmatch('File "[^"]*", line (%d+)%s*\n([^[]*)%s*(%^.*)%s*\n%w*Error: ([^\n]*)') do
+		table.insert(diagnostics, {
+			lnum = tonumber(line_num) - 1, -- 0-based line numbers for diagnostics
+			col = 0, -- Start of line for syntax errors
+			end_col = #content, -- End of the problematic line
+			severity = vim.diagnostic.severity.ERROR,
+			message = error_msg,
+			source = "Python Syntax",
+		})
+	end
+
+	-- Alternative pattern for simpler error messages
+	for file_part, line_num, error_msg in error_output:gmatch('File "[^"]*", line (%d+)[^\n]*\n%w*Error: ([^\n]*)') do
+		table.insert(diagnostics, {
+			lnum = tonumber(line_num) - 1,
+			col = 0,
+			end_col = 0,
+			severity = vim.diagnostic.severity.ERROR,
+			message = error_msg,
+			source = "Python Syntax",
+		})
+	end
+
+	return diagnostics
+end
+
+-- Python syntax validation on save (no formatting)
 api.nvim_create_autocmd("BufWritePre", {
-	group = api.nvim_create_augroup("auto_format_python_on_save", { clear = true }),
+	group = api.nvim_create_augroup("python_syntax_check_on_save", { clear = true }),
 	pattern = "*.py",
-	desc = "Format Python file with ruff on save",
+	desc = "Check Python syntax on save",
 	callback = function()
-		-- Check if ruff is available
-		if vim.fn.executable("ruff") == 0 then
-			vim.notify("ruff not found. Please install it via Mason.", vim.log.levels.WARN)
-			return
+		-- Check if python is available for syntax validation
+		if vim.fn.executable("python") == 0 and vim.fn.executable("python3") == 0 then
+			return -- Silent exit if python not available
 		end
 
-		local cursor_pos = vim.api.nvim_win_get_cursor(0)
-		local original_content = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+		local bufnr = vim.api.nvim_get_current_buf()
+		local original_content = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
-		-- Format with ruff
-		local success = pcall(function()
-			vim.cmd("silent %!ruff format --stdin-filename % -")
-		end)
+		-- Clear previous syntax diagnostics for this buffer
+		vim.diagnostic.reset(python_syntax_ns, bufnr)
 
-		if not success then
-			-- Restore original content if formatting failed
-			vim.api.nvim_buf_set_lines(0, 0, -1, false, original_content)
-			vim.notify("Python formatting failed", vim.log.levels.ERROR)
+		-- Validate Python syntax
+		local python_cmd = vim.fn.executable("python") == 1 and "python" or "python3"
+		local temp_file = vim.fn.tempname() .. ".py"
+
+		-- Write current content to temp file for syntax checking
+		vim.fn.writefile(original_content, temp_file)
+
+		-- Use a shell command that captures both stdout and stderr
+		local syntax_check_cmd = string.format('%s -m py_compile "%s" 2>&1', python_cmd, temp_file)
+		local syntax_result = vim.fn.system(syntax_check_cmd)
+
+		-- Clean up temp file
+		vim.fn.delete(temp_file)
+
+		-- If syntax check failed, publish diagnostics
+		if vim.v.shell_error ~= 0 then
+			local diagnostics = parse_python_syntax_error(syntax_result, temp_file)
+
+			if #diagnostics > 0 then
+				-- Set the diagnostics for the current buffer
+				vim.diagnostic.set(python_syntax_ns, bufnr, diagnostics, {
+					severity = vim.diagnostic.severity.ERROR,
+				})
+			else
+				-- Fallback if parsing failed
+				vim.diagnostic.set(python_syntax_ns, bufnr, {{
+					lnum = 0,
+					col = 0,
+					end_col = 0,
+					severity = vim.diagnostic.severity.ERROR,
+					message = "Python syntax error: " .. syntax_result,
+					source = "Python Syntax",
+				}})
+			end
 		end
-
-		vim.api.nvim_win_set_cursor(0, cursor_pos)
 	end,
 })
