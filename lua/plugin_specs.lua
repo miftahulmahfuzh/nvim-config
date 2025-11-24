@@ -539,7 +539,6 @@ local plugin_specs = {
 				ensure_installed = {
 					"gofumpt",
 					"stylua",
-					"prettierd",
 				},
 				auto_update = true,
 				run_on_start = true,
