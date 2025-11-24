@@ -110,10 +110,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		end, { desc = "list workspace folder" })
 
 		-- Set some key bindings conditional on server capabilities
-		-- Disable ruff hover feature in favor of Pyright
-		if client.name == "ruff" then
-			client.server_capabilities.hoverProvider = false
-		end
 
 		-- Uncomment code below to enable inlay hint from language server, some LSP server supports inlay hint,
 		-- but disable this feature by default, so you may need to enable inlay hint in the LSP server config.
@@ -176,7 +172,6 @@ local enabled_lsp_servers = {
 	lua_ls = "lua-language-server",
 	gopls = "gopls",
 	pyright = "pyright",
-	ruff = "ruff",
 	vimls = "vim-language-server",
 }
 

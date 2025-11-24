@@ -256,7 +256,156 @@ api.nvim_create_autocmd("BufWritePre", {
 	end,
 })
 
--- Format JS, TS, HTML, CSS files with prettierd on save
+-- Create diagnostic namespace for JavaScript/TypeScript syntax errors
+local js_ts_syntax_ns = vim.api.nvim_create_namespace("js_ts_syntax_errors")
+
+-- Helper function to check if node is available for syntax validation
+local function check_node_executable()
+	return vim.fn.executable("node") == 1
+end
+
+-- Helper function to parse JavaScript/TypeScript syntax errors
+local function parse_js_ts_syntax_error(error_output)
+	local diagnostics = {}
+
+	-- Pattern for TypeScript/JavaScript syntax errors
+	-- Example: "test.ts:5:1 - error TS1002: Unterminated string literal."
+	for file_path, line_num, col_num, error_msg in error_output:gmatch('([^:]+):(%d+):(%d+)%s*%-%s*error[^:]*:%s*([^\n]*)') do
+		table.insert(diagnostics, {
+			lnum = tonumber(line_num) - 1, -- 0-based line numbers for diagnostics
+			col = tonumber(col_num) - 1, -- 0-based column numbers for diagnostics
+			end_col = tonumber(col_num), -- End at the same column for syntax errors
+			severity = vim.diagnostic.severity.ERROR,
+			message = error_msg,
+			source = "TypeScript/JavaScript Syntax",
+		})
+	end
+
+	-- Fallback pattern for other types of JS/TS errors
+	for error_msg in error_output:gmatch('[Ee]rror[:]?%s*([^\n]*)') do
+		if error_msg ~= "" then
+			table.insert(diagnostics, {
+				lnum = 0,
+				col = 0,
+				end_col = 0,
+				severity = vim.diagnostic.severity.ERROR,
+				message = error_msg,
+				source = "TypeScript/JavaScript Syntax",
+			})
+		end
+	end
+
+	return diagnostics
+end
+
+-- JavaScript/TypeScript syntax validation (non-destructive)
+local function validate_js_ts_syntax(bufnr, content)
+	-- Check if node is available for syntax validation
+	if not check_node_executable() then
+		return -- Silent exit if node not available
+	end
+
+	-- Clear previous syntax diagnostics for this buffer
+	vim.diagnostic.reset(js_ts_syntax_ns, bufnr)
+
+	local filetype = vim.bo[bufnr].filetype
+	local temp_file = vim.fn.tempname()
+	local file_ext = filetype:match("typescript") and ".ts" or ".js"
+	temp_file = temp_file .. file_ext
+
+	-- Write current content to temp file for syntax checking
+	vim.fn.writefile(content, temp_file)
+
+	local syntax_check_cmd
+	if filetype:match("typescript") then
+		-- Try to use TypeScript compiler if available
+		if vim.fn.executable("tsc") == 1 then
+			syntax_check_cmd = string.format('tsc --noEmit --strict "%s" 2>&1', temp_file)
+		else
+			-- Fallback to node with basic syntax check
+			syntax_check_cmd = string.format('node -c "%s" 2>&1', temp_file)
+		end
+	else
+		-- JavaScript syntax check
+		syntax_check_cmd = string.format('node -c "%s" 2>&1', temp_file)
+	end
+
+	local syntax_result = vim.fn.system(syntax_check_cmd)
+
+	-- Clean up temp file
+	vim.fn.delete(temp_file)
+
+	-- If syntax check failed, publish diagnostics
+	if vim.v.shell_error ~= 0 then
+		local diagnostics = parse_js_ts_syntax_error(syntax_result)
+
+		if #diagnostics > 0 then
+			-- Set the diagnostics for the current buffer
+			vim.diagnostic.set(js_ts_syntax_ns, bufnr, diagnostics, {
+				severity = vim.diagnostic.severity.ERROR,
+			})
+		else
+			-- Fallback if parsing failed
+			vim.diagnostic.set(js_ts_syntax_ns, bufnr, {{
+				lnum = 0,
+				col = 0,
+				end_col = 0,
+				severity = vim.diagnostic.severity.ERROR,
+				message = "JavaScript/TypeScript syntax error: " .. syntax_result,
+				source = "TypeScript/JavaScript Syntax",
+			}})
+		end
+		return false -- Syntax error detected
+	end
+
+	return true -- No syntax errors
+end
+
+-- Safe formatting function that only runs if there are no syntax errors
+local function safe_format_prettierd()
+	local bufnr = vim.api.nvim_get_current_buf()
+	local original_content = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+	local cursor_pos = vim.api.nvim_win_get_cursor(0)
+
+	-- First, validate syntax without modifying the buffer
+	if not validate_js_ts_syntax(bufnr, original_content) then
+		-- Syntax error found - don't format, just show diagnostics
+		vim.notify("Formatting skipped due to syntax errors", vim.log.levels.WARN, { title = "nvim-config" })
+		return
+	end
+
+	-- No syntax errors - proceed with safe formatting
+	local temp_file = vim.fn.tempname() .. (vim.bo.filetype:match("typescript") and ".ts" or ".js")
+	vim.fn.writefile(original_content, temp_file)
+
+	-- Try to format the temp file
+	local format_cmd = string.format('prettierd "%s" 2>&1', temp_file)
+	local formatted_result = vim.fn.system(format_cmd)
+
+	-- Clean up temp file
+	vim.fn.delete(temp_file)
+
+	-- Only apply formatting if prettierd succeeded
+	if vim.v.shell_error == 0 and formatted_result ~= "" then
+		-- Split formatted result into lines
+		local formatted_lines = {}
+		for line in formatted_result:gmatch("[^\r\n]+") do
+			table.insert(formatted_lines, line)
+		end
+
+		-- Only apply formatting if the result is not empty
+		if #formatted_lines > 0 then
+			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, formatted_lines)
+			vim.api.nvim_win_set_cursor(0, cursor_pos)
+		else
+			vim.notify("Prettierd returned empty result, formatting skipped", vim.log.levels.WARN, { title = "nvim-config" })
+		end
+	else
+		vim.notify("Prettierd formatting failed, preserving original content", vim.log.levels.WARN, { title = "nvim-config" })
+	end
+end
+
+-- Format JS, TS, HTML, CSS files with prettierd on save (non-destructive)
 api.nvim_create_autocmd("BufWritePre", {
 	group = api.nvim_create_augroup("auto_format_prettierd_on_save", { clear = true }),
 	pattern = {
@@ -271,11 +420,9 @@ api.nvim_create_autocmd("BufWritePre", {
 		"*.ts",
 		"*.tsx",
 	},
-	desc = "Format web development files with prettierd on save",
+	desc = "Safe format web development files with prettierd on save",
 	callback = function()
-		local cursor_pos = vim.api.nvim_win_get_cursor(0)
-		vim.cmd("silent %!prettierd %")
-		vim.api.nvim_win_set_cursor(0, cursor_pos)
+		safe_format_prettierd()
 	end,
 })
 

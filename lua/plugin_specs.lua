@@ -552,7 +552,7 @@ local plugin_specs = {
 		config = function()
 			require("mason-lspconfig").setup({
 				-- A list of servers to automatically install if they're not already installed
-				ensure_installed = { "lua_ls", "yamlls", "bashls", "ruff", "pyright", "gopls", "html", "cssls" },
+				ensure_installed = { "lua_ls", "yamlls", "bashls", "pyright", "gopls", "html", "cssls" },
 			})
 		end,
 	},
