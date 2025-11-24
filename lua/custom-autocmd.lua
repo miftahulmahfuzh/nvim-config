@@ -396,7 +396,18 @@ local function safe_format_prettierd()
 		-- Only apply formatting if the result is not empty
 		if #formatted_lines > 0 then
 			vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, formatted_lines)
-			vim.api.nvim_win_set_cursor(0, cursor_pos)
+
+			-- Clamp cursor position to valid ranges after formatting
+			local total_lines = vim.api.nvim_buf_line_count(bufnr)
+			local max_line = math.max(1, total_lines)  -- Ensure at least line 1
+			local clamped_line = math.min(cursor_pos[1], max_line)
+
+			-- Get the line length to clamp column position as well
+			local line_content = vim.api.nvim_buf_get_lines(bufnr, clamped_line - 1, clamped_line, false)[1] or ""
+			local max_col = math.max(0, #line_content)  -- Allow cursor at end of line
+			local clamped_col = math.min(cursor_pos[2], max_col)
+
+			vim.api.nvim_win_set_cursor(0, {clamped_line, clamped_col})
 		else
 			vim.notify("Prettierd returned empty result, formatting skipped", vim.log.levels.WARN, { title = "nvim-config" })
 		end
