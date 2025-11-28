@@ -1,4 +1,4 @@
--- /home/devmiftahul/.config/nvim/lua/plugin_specs.lua
+-- /home/miftah/.config/nvim/lua/plugin_specs.lua
 
 local utils = require("utils")
 
@@ -278,7 +278,6 @@ local plugin_specs = {
 		cmd = "Vista",
 	},
 
-	
 	-- Automatic insertion and deletion of a pair of characters
 	{
 		"windwp/nvim-autopairs",
