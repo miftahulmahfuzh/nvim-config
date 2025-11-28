@@ -1,3 +1,5 @@
+-- /home/miftah/.config/nvim/lua/config/fzf-lua.lua
+
 local actions = require("fzf-lua.actions")
 local opencode = require("custom.opencode") -- Require our new, clean module
 
@@ -59,18 +61,35 @@ vim.keymap.set({ "n", "v" }, "<leader>m", function()
 	end
 end, { desc = "Grep for word/selection" })
 
--- OpenCode Integration Keymaps
--- These now call the clean, modularized functions.
-
--- <leader>fo - Fuzzy find files and send to OpenCode
-vim.keymap.set("n", "<leader>fo", function()
+-- Insert Mode Keymap: <C-f>
+-- Opens fzf file picker, but inserts the relative path instead of opening it.
+vim.keymap.set("i", "<C-f>", function()
 	require("fzf-lua").files({
+		-- We override the default actions for this specific call
 		actions = {
-			-- The action calls our clean, reusable function.
-			["default"] = opencode.send_files_from_fzf,
+			["default"] = function(selected)
+				-- 'selected' is a lua table (list) containing the selected items
+				if not selected or #selected < 1 then
+					return
+				end
+
+				-- We handle multiple selections (using Tab in fzf) just in case
+				local paths_to_insert = {}
+
+				for _, item in ipairs(selected) do
+					-- entry_to_file cleans up the string (removes icons, etc)
+					local entry = require("fzf-lua").path.entry_to_file(item)
+					table.insert(paths_to_insert, entry.path)
+				end
+
+				-- Join multiple paths with a space (useful if you tag multiple files)
+				local text_to_insert = table.concat(paths_to_insert, " @")
+
+				-- Insert the text at the current cursor position
+				-- 'c' = characterwise
+				-- true, true = follow indentation and place cursor after text
+				vim.api.nvim_put({ text_to_insert }, "c", true, true)
+			end,
 		},
 	})
-end, { desc = "Fuzzy find files and send to OpenCode" })
-
--- <leader>z - Send visual selection to OpenCode
-vim.keymap.set("v", "<leader>z", opencode.send_visual_selection, { desc = "Send visual selection to OpenCode" })
+end, { desc = "Insert file path" })
