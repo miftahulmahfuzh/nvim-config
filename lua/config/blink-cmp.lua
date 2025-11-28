@@ -54,7 +54,16 @@ require("blink.cmp").setup({
 			path = {
 				name = "Path",
 				module = "blink.cmp.sources.path",
-				min_keyword_length = 1,
+				score_offset = 3, -- Boost priority so it appears above 'buffer' suggestions
+				-- When typing a path, we usually want it to activate immediately
+				opts = {
+					trailing_slash = false,
+					label_trailing_slash = true,
+					get_cwd = function(context)
+						return vim.fn.expand(("#%d:p:h"):format(context.bufnr))
+					end,
+					show_hidden_files_by_default = true,
+				},
 			},
 			buffer = {
 				name = "Buffer",
