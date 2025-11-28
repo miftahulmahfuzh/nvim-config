@@ -79,9 +79,9 @@ require("blink.cmp").setup({
 	},
 
 	-- Use Lua implementation to avoid Rust dependency issues
-	fuzzy = {
-		implementation = "lua",
-	},
+	-- fuzzy = {
+	-- 	implementation = "lua",
+	-- },
 
 	-- Command line completion
 	cmdline = {
