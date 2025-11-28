@@ -23,24 +23,19 @@ local firenvim_not_active = function()
 end
 
 local plugin_specs = {
-	-- auto-completion engine
-	{ "hrsh7th/cmp-nvim-lsp", lazy = true },
-	{ "hrsh7th/cmp-path", lazy = true },
-	{ "hrsh7th/cmp-buffer", lazy = true },
-	{ "hrsh7th/cmp-omni", lazy = true },
-	{ "hrsh7th/cmp-cmdline", lazy = true },
-	{ "quangnguyen30192/cmp-nvim-ultisnips", lazy = true },
+	-- auto-completion engine with blink-cmp
 	{
-		"hrsh7th/nvim-cmp",
-		name = "nvim-cmp",
-		event = "InsertEnter", -- Changed from VeryLazy to be more specific
+		"saghen/blink.cmp",
+		version = "v0.*",
+		lazy = false,
+		priority = 100,
 		dependencies = {
-			"hrsh7th/cmp-nvim-lsp",
-			"hrsh7th/cmp-path",
-			"hrsh7th/cmp-buffer",
+			"rafamadriz/friendly-snippets",
+			-- Optional dependencies
+			"onsails/lspkind.nvim",
 		},
 		config = function()
-			require("config.nvim-cmp")
+			require("config.blink-cmp")
 		end,
 	},
 	{
@@ -283,15 +278,7 @@ local plugin_specs = {
 		cmd = "Vista",
 	},
 
-	-- Snippet engine and snippet template
-	{
-		"SirVer/ultisnips",
-		dependencies = {
-			"honza/vim-snippets",
-		},
-		event = "InsertEnter",
-	},
-
+	
 	-- Automatic insertion and deletion of a pair of characters
 	{
 		"windwp/nvim-autopairs",
