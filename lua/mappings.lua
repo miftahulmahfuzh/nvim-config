@@ -365,7 +365,7 @@ keymap.set("i", "<C-D>", "<DEL>")
 keymap.set("i", "jk", "<Esc>:write<CR>", { silent = true, desc = "exit insert mode and save" })
 
 -- Prettify selected JSON (Handles both raw and escaped JSON)
-keymap.set("x", "J", function()
+keymap.set("x", "H", function()
   -- 1. Grab the visual selection
   vim.cmd('noau normal! "vy')
   local text = vim.fn.getreg("v")
