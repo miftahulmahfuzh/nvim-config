@@ -1,0 +1,45 @@
+{
+  "result": [
+    {
+      "concept_name": "Djarum Group Indonesia Jaya-EN",
+      "concept_explanation": "Djarum Group DESC - EN",
+      "latest_data": {
+        "latest_price": "814.65",
+        "latest_change": "2.36",
+        "latest_change_percentage": "+0.29%",
+        "volume": "29.89M",
+        "value": "239.48B",
+        "open": "807.9",
+        "high": "815",
+        "low": "807",
+        "gainers": 2,
+        "unchanged": 2,
+        "losers": 0,
+        "latest_price_timestamp": "2025-12-02T10:26:42+07:00"
+      },
+      "constituent_stocks": [
+        {
+          "stock_code": "BBCA",
+          "tags": [
+            "Top Revenue",
+            "Top Market Cap",
+            "Top Profit"
+          ]
+        },
+        {
+          "stock_code": "BELI"
+        },
+        {
+          "stock_code": "KINO"
+        }
+      ],
+      "stock_codes": [
+        "BBCA",
+        "KINO",
+        "TELE",
+        "BELI"
+      ]
+    }
+  ]
+}
+
