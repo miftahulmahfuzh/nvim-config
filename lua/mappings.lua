@@ -396,3 +396,48 @@ keymap.set("x", "J", function()
   vim.fn.setreg("v", output)
   vim.cmd('normal! gv"vp')
 end, { desc = "Prettify selected JSON" })
+
+--- Opens the visually selected text as a file path in a new buffer.
+local function open_visual_path()
+  -- 1. Get the visually selected text:
+  -- Save the current register, then yank the visual selection into a temporary register (z),
+  -- then restore the original register.
+  local old_reg = vim.fn.getreg("z")
+  local old_regtype = vim.fn.getregtype("z")
+  vim.cmd('normal! "zy')
+  local path_rel = vim.fn.getreg("z")
+  vim.fn.setreg("z", old_reg, old_regtype)
+
+  -- 2. Clean up and resolve the path
+  -- Remove newlines and trim whitespace from the selected text
+  path_rel = path_rel:gsub("[\r\n]", ""):gsub("^%s+", ""):gsub("%s+$", "")
+
+  if path_rel == "" then
+    vim.notify("No text selected or selected text is empty.", vim.log.levels.WARN)
+    return
+  end
+
+  -- Resolve to a full path using the current working directory (CWD)
+  local full_path = vim.fn.resolve(path_rel)
+
+  -- If `full_path` is still relative, it means `resolve` didn't find it based on path_rel.
+  -- We assume it's relative to CWD in this specific use case.
+  if vim.fn.isdirectory(full_path) == 0 and vim.fn.filereadable(full_path) == 0 then
+    -- Try resolving relative to CWD if the simple resolve failed
+    full_path = vim.fn.getcwd() .. "/" .. path_rel
+
+    -- Final check
+    if vim.fn.isdirectory(full_path) == 0 and vim.fn.filereadable(full_path) == 0 then
+      vim.notify("File not found at: " .. full_path, vim.log.levels.ERROR)
+      return
+    end
+  end
+
+  -- 3. Open the file in a new tab
+  -- Using `<cmd>tabedit` to open in a new tab is safer/less disruptive than just a new buffer/window.
+  vim.cmd("tabedit " .. vim.fn.fnameescape(full_path))
+  vim.notify("Opened file: " .. path_rel, vim.log.levels.INFO)
+end
+
+-- Keymap in Visual mode (x) for Shift + K
+keymap.set("x", "<S-k>", open_visual_path, { desc = "Open visually selected text as file path" })
