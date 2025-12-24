@@ -508,6 +508,15 @@ local plugin_specs = {
     opts = {},
   },
 
+  -- Fast navigation (hop replaces built-in f)
+  {
+    "phaazon/hop.nvim",
+    event = "VeryLazy",
+    config = function()
+      require("config.hop")
+    end,
+  },
+
   -- Personal addition
   {
     "williamboman/mason.nvim",
