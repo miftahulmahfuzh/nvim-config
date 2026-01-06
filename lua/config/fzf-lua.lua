@@ -82,8 +82,8 @@ vim.keymap.set("i", "<C-f>", function()
 					table.insert(paths_to_insert, entry.path)
 				end
 
-				-- Join multiple paths with a space (useful if you tag multiple files)
-				local text_to_insert = table.concat(paths_to_insert, " @")
+				-- Join multiple paths with " @", prepend "@" to the first item, and append " ."
+				local text_to_insert = "@" .. table.concat(paths_to_insert, " @") .. " ."
 
 				-- Insert the text at the current cursor position
 				-- 'c' = characterwise
