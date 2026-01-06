@@ -83,7 +83,7 @@ vim.keymap.set("i", "<C-f>", function()
 				end
 
 				-- Join multiple paths with " @", prepend "@" to the first item, and append " ."
-				local text_to_insert = "@" .. table.concat(paths_to_insert, " @") .. " ."
+				local text_to_insert = " @" .. table.concat(paths_to_insert, " @") .. " ."
 
 				-- Insert the text at the current cursor position
 				-- 'c' = characterwise
