@@ -15,7 +15,7 @@ nvim_tree.setup {
         return
       end
 
-      local filepath = node.absolute_path
+      local filepath = vim.fn.fnamemodify(node.absolute_path, ":.")
 
       -- Find a valid window that's not the nvim-tree window
       local current_win = vim.api.nvim_get_current_win()
