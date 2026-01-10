@@ -453,3 +453,140 @@ end
 
 -- Keymap in Visual mode (x) for Shift + K
 keymap.set("x", "<S-k>", open_visual_path, { desc = "Open visually selected text as file path" })
+
+--- Opens a file path detected in the current line.
+local function open_path_under_cursor()
+  -- 1. Get the current line and cursor position
+  local line = vim.api.nvim_get_current_line()
+  local cursor_col = vim.fn.col(".") -- 1-indexed column
+
+  -- 2. Find all potential file paths in the line
+  -- Pattern matches: paths with slashes and optional extensions
+  -- This captures: relative/path, /absolute/path, path/to/file.ext
+  local paths = {}
+  for path_match in line:gmatch("[^%s\"'`]+[/][^%s\"'`]+") do
+    local start_pos = line:find(path_match, 1, true)
+    local end_pos = start_pos + #path_match - 1
+
+    table.insert(paths, {
+      text = path_match,
+      start_col = start_pos,
+      end_col = end_pos,
+    })
+  end
+
+  -- Also check for paths inside quotes (common in code)
+  for quoted_path in line:gmatch("[\"']([^\"']+/[^\"]*)[\"']") do
+    local start_pos = line:find(quoted_path, 1, true)
+    if start_pos then
+      local end_pos = start_pos + #quoted_path - 1
+      table.insert(paths, {
+        text = quoted_path,
+        start_col = start_pos,
+        end_col = end_pos,
+      })
+    end
+  end
+
+  -- If no paths found, notify user
+  if #paths == 0 then
+    vim.notify("No file path found in current line", vim.log.levels.INFO, { title = "Path Detection" })
+    return
+  end
+
+  -- 3. Find the path nearest to the cursor
+  local nearest_path = nil
+  local min_distance = math.huge
+
+  for _, path_info in ipairs(paths) do
+    -- Check if cursor is within or near the path
+    if cursor_col >= path_info.start_col and cursor_col <= path_info.end_col + 1 then
+      nearest_path = path_info
+      break
+    end
+
+    -- Calculate distance to the path
+    local dist = math.min(math.abs(path_info.start_col - cursor_col), math.abs(path_info.end_col - cursor_col))
+    if dist < min_distance then
+      min_distance = dist
+      nearest_path = path_info
+    end
+  end
+
+  if not nearest_path then
+    vim.notify("Could not determine which path to open", vim.log.levels.WARN, { title = "Path Detection" })
+    return
+  end
+
+  -- 4. Clean the path - remove surrounding punctuation and quotes
+  local raw_path = nearest_path.text
+  local clean_path = raw_path
+
+  -- Remove leading unwanted characters one by one
+  clean_path = clean_path:gsub("^@+", "")   -- Remove leading @ (common in imports like @module/path)
+  clean_path = clean_path:gsub("^%[+", "")  -- Remove leading [
+  clean_path = clean_path:gsub("^%(+", "")  -- Remove leading (
+  clean_path = clean_path:gsub('^"+', "")   -- Remove leading "
+  clean_path = clean_path:gsub("^'+", "")   -- Remove leading '
+  clean_path = clean_path:gsub("^`+", "")   -- Remove leading `
+
+  -- Remove trailing unwanted characters one by one
+  clean_path = clean_path:gsub("%.+$", "")  -- Remove trailing . (common in punctuation at end of sentence)
+  clean_path = clean_path:gsub("%]+$", "")  -- Remove trailing ]
+  clean_path = clean_path:gsub("%)$", "")   -- Remove trailing )
+  clean_path = clean_path:gsub('"$', "")    -- Remove trailing "
+  clean_path = clean_path:gsub("'$", "")    -- Remove trailing '
+  clean_path = clean_path:gsub("`$", "")    -- Remove trailing `
+  clean_path = clean_path:gsub(",$", "")    -- Remove trailing ,
+  clean_path = clean_path:gsub(";$", "")    -- Remove trailing ;
+  clean_path = clean_path:gsub(":$", "")    -- Remove trailing :
+  clean_path = clean_path:gsub("!$", "")    -- Remove trailing !
+  clean_path = clean_path:gsub("@$", "")    -- Remove trailing @
+  clean_path = clean_path:gsub("#$", "")    -- Remove trailing #
+  clean_path = clean_path:gsub("%$$", "")   -- Remove trailing $
+  clean_path = clean_path:gsub("%%$", "")   -- Remove trailing %
+  clean_path = clean_path:gsub("%^$", "")   -- Remove trailing ^
+  clean_path = clean_path:gsub("&$", "")    -- Remove trailing &
+  clean_path = clean_path:gsub("%*$", "")   -- Remove trailing *
+  clean_path = clean_path:gsub(">$", "")    -- Remove trailing >
+  clean_path = clean_path:gsub("<$", "")    -- Remove trailing <
+
+  -- 5. Try to resolve the path using multiple strategies
+  local candidates = {}
+
+  -- Strategy 1: Try as-is (could be absolute or already correct relative)
+  table.insert(candidates, clean_path)
+
+  -- Strategy 2: Relative to current file's directory
+  local current_file = vim.fn.expand("%:p:h")
+  if current_file and current_file ~= "" then
+    table.insert(candidates, current_file .. "/" .. clean_path)
+  end
+
+  -- Strategy 3: Relative to current working directory
+  local cwd = vim.fn.getcwd()
+  table.insert(candidates, cwd .. "/" .. clean_path)
+
+  -- Strategy 4: Try with findfile (searches in path)
+  table.insert(candidates, vim.fn.findfile(clean_path))
+
+  -- 6. Try each candidate until we find a readable file
+  local found_path = nil
+  for _, candidate in ipairs(candidates) do
+    if candidate ~= "" and vim.fn.filereadable(candidate) == 1 then
+      found_path = candidate
+      break
+    end
+  end
+
+  -- 7. Open the file or show error
+  if found_path then
+    vim.cmd("edit " .. vim.fn.fnameescape(found_path))
+    vim.notify("Opened: " .. clean_path, vim.log.levels.INFO, { title = "File Opened" })
+  else
+    vim.notify("File not found: " .. clean_path, vim.log.levels.ERROR, { title = "Path Not Found" })
+  end
+end
+
+-- Normal mode: Ctrl-o to open file path under cursor
+keymap.set("n", "<C-o>", open_path_under_cursor, { desc = "Open file path detected in current line" })
