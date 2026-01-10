@@ -461,9 +461,18 @@ local function open_path_under_cursor()
   local cursor_col = vim.fn.col(".") -- 1-indexed column
 
   -- 2. Find all potential file paths in the line
-  -- Pattern matches: paths with slashes and optional extensions
-  -- This captures: relative/path, /absolute/path, path/to/file.ext
+
+  -- Common file extensions to look for
+  local extensions = {
+    "md", "txt", "go", "lua", "py", "js", "ts", "json", "yaml", "yml", "toml",
+    "vim", "sh", "bash", "zsh", "fish", "rs", "c", "cpp", "h", "hpp",
+    "java", "kt", "swift", "rb", "php", "css", "html", "xml", "sql",
+    "conf", "cfg", "ini", "env", "gitignore", "mod", "sum",
+  }
+
   local paths = {}
+
+  -- Pattern 1: Paths with slashes (relative/path, /absolute/path, path/to/file.ext)
   for path_match in line:gmatch("[^%s\"'`]+[/][^%s\"'`]+") do
     local start_pos = line:find(path_match, 1, true)
     local end_pos = start_pos + #path_match - 1
@@ -473,6 +482,37 @@ local function open_path_under_cursor()
       start_col = start_pos,
       end_col = end_pos,
     })
+  end
+
+  -- Pattern 2: Filenames with extensions (e.g., file.md, main.go, @README.md)
+  -- This catches cases without slashes
+  -- Lua patterns don't support alternation, so we try each extension separately
+  for _, ext in ipairs(extensions) do
+    -- Pattern: word characters + dot + extension
+    -- Example: [%w_-]+%.md matches README.md, file.md, etc.
+    local ext_pattern = "[%w_-]+%." .. ext
+
+    for full_match in line:gmatch(ext_pattern) do
+      local start_pos = line:find(full_match, 1, true)
+      local end_pos = start_pos + #full_match - 1
+
+      -- Avoid duplicates
+      local is_duplicate = false
+      for _, existing in ipairs(paths) do
+        if existing.text == full_match then
+          is_duplicate = true
+          break
+        end
+      end
+
+      if not is_duplicate then
+        table.insert(paths, {
+          text = full_match,
+          start_col = start_pos,
+          end_col = end_pos,
+        })
+      end
+    end
   end
 
   -- Also check for paths inside quotes (common in code)
