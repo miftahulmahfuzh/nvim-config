@@ -283,8 +283,8 @@ keymap.set("x", "c", '"_c')
 -- Remove trailing whitespace characters
 keymap.set("n", "<leader><space>", "<cmd>StripTrailingWhitespace<cr>", { desc = "remove trailing space" })
 
--- Remove leading whitespace from current line
-keymap.set("n", "<leader>s", function()
+-- Helper function to remove leading whitespace from current line
+local function remove_leading_whitespace()
   local line = vim.api.nvim_get_current_line()
   local first_char = line:find("[^%s]")
   if first_char then
@@ -293,7 +293,18 @@ keymap.set("n", "<leader>s", function()
     -- Line is all whitespace, make it empty
     vim.api.nvim_set_current_line("")
   end
-end, { desc = "remove leading whitespace from line" })
+end
+
+-- Remove leading whitespace from current line
+keymap.set("n", "<leader>s", remove_leading_whitespace, { desc = "remove leading whitespace from line" })
+
+-- Paste and remove leading whitespace from current line
+keymap.set("n", "<C-v>", function()
+  -- Paste first (using normal! to avoid recursive mapping)
+  vim.cmd("normal! p")
+  -- Then remove leading whitespace from the current line
+  remove_leading_whitespace()
+end, { desc = "paste and remove leading whitespace from line" })
 
 -- Copy entire buffer.
 keymap.set("n", "<leader>y", "<cmd>%yank<cr>", { desc = "yank entire buffer" })
