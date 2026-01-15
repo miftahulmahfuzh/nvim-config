@@ -299,7 +299,7 @@ end
 keymap.set("n", "<leader>s", remove_leading_whitespace, { desc = "remove leading whitespace from line" })
 
 -- Paste and remove leading whitespace from current line
-keymap.set("n", "<C-v>", function()
+keymap.set("n", "<C-m>", function()
   -- Paste first (using normal! to avoid recursive mapping)
   vim.cmd("normal! p")
   -- Then remove leading whitespace from the current line
@@ -475,10 +475,43 @@ local function open_path_under_cursor()
 
   -- Common file extensions to look for
   local extensions = {
-    "md", "txt", "go", "lua", "py", "js", "ts", "json", "yaml", "yml", "toml",
-    "vim", "sh", "bash", "zsh", "fish", "rs", "c", "cpp", "h", "hpp",
-    "java", "kt", "swift", "rb", "php", "css", "html", "xml", "sql",
-    "conf", "cfg", "ini", "env", "gitignore", "mod", "sum",
+    "md",
+    "txt",
+    "go",
+    "lua",
+    "py",
+    "js",
+    "ts",
+    "json",
+    "yaml",
+    "yml",
+    "toml",
+    "vim",
+    "sh",
+    "bash",
+    "zsh",
+    "fish",
+    "rs",
+    "c",
+    "cpp",
+    "h",
+    "hpp",
+    "java",
+    "kt",
+    "swift",
+    "rb",
+    "php",
+    "css",
+    "html",
+    "xml",
+    "sql",
+    "conf",
+    "cfg",
+    "ini",
+    "env",
+    "gitignore",
+    "mod",
+    "sum",
   }
 
   local paths = {}
@@ -527,7 +560,7 @@ local function open_path_under_cursor()
   end
 
   -- Also check for paths inside quotes (common in code)
-  for quoted_path in line:gmatch("[\"']([^\"']+/[^\"]*)[\"']") do
+  for quoted_path in line:gmatch('["\']([^"\']+/[^"]*)["\']') do
     local start_pos = line:find(quoted_path, 1, true)
     if start_pos then
       local end_pos = start_pos + #quoted_path - 1
@@ -574,33 +607,33 @@ local function open_path_under_cursor()
   local clean_path = raw_path
 
   -- Remove leading unwanted characters one by one
-  clean_path = clean_path:gsub("^@+", "")   -- Remove leading @ (common in imports like @module/path)
-  clean_path = clean_path:gsub("^%[+", "")  -- Remove leading [
-  clean_path = clean_path:gsub("^%(+", "")  -- Remove leading (
-  clean_path = clean_path:gsub('^"+', "")   -- Remove leading "
-  clean_path = clean_path:gsub("^'+", "")   -- Remove leading '
-  clean_path = clean_path:gsub("^`+", "")   -- Remove leading `
+  clean_path = clean_path:gsub("^@+", "") -- Remove leading @ (common in imports like @module/path)
+  clean_path = clean_path:gsub("^%[+", "") -- Remove leading [
+  clean_path = clean_path:gsub("^%(+", "") -- Remove leading (
+  clean_path = clean_path:gsub('^"+', "") -- Remove leading "
+  clean_path = clean_path:gsub("^'+", "") -- Remove leading '
+  clean_path = clean_path:gsub("^`+", "") -- Remove leading `
 
   -- Remove trailing unwanted characters one by one
-  clean_path = clean_path:gsub("%.+$", "")  -- Remove trailing . (common in punctuation at end of sentence)
-  clean_path = clean_path:gsub("%]+$", "")  -- Remove trailing ]
-  clean_path = clean_path:gsub("%)$", "")   -- Remove trailing )
-  clean_path = clean_path:gsub('"$', "")    -- Remove trailing "
-  clean_path = clean_path:gsub("'$", "")    -- Remove trailing '
-  clean_path = clean_path:gsub("`$", "")    -- Remove trailing `
-  clean_path = clean_path:gsub(",$", "")    -- Remove trailing ,
-  clean_path = clean_path:gsub(";$", "")    -- Remove trailing ;
-  clean_path = clean_path:gsub(":$", "")    -- Remove trailing :
-  clean_path = clean_path:gsub("!$", "")    -- Remove trailing !
-  clean_path = clean_path:gsub("@$", "")    -- Remove trailing @
-  clean_path = clean_path:gsub("#$", "")    -- Remove trailing #
-  clean_path = clean_path:gsub("%$$", "")   -- Remove trailing $
-  clean_path = clean_path:gsub("%%$", "")   -- Remove trailing %
-  clean_path = clean_path:gsub("%^$", "")   -- Remove trailing ^
-  clean_path = clean_path:gsub("&$", "")    -- Remove trailing &
-  clean_path = clean_path:gsub("%*$", "")   -- Remove trailing *
-  clean_path = clean_path:gsub(">$", "")    -- Remove trailing >
-  clean_path = clean_path:gsub("<$", "")    -- Remove trailing <
+  clean_path = clean_path:gsub("%.+$", "") -- Remove trailing . (common in punctuation at end of sentence)
+  clean_path = clean_path:gsub("%]+$", "") -- Remove trailing ]
+  clean_path = clean_path:gsub("%)$", "") -- Remove trailing )
+  clean_path = clean_path:gsub('"$', "") -- Remove trailing "
+  clean_path = clean_path:gsub("'$", "") -- Remove trailing '
+  clean_path = clean_path:gsub("`$", "") -- Remove trailing `
+  clean_path = clean_path:gsub(",$", "") -- Remove trailing ,
+  clean_path = clean_path:gsub(";$", "") -- Remove trailing ;
+  clean_path = clean_path:gsub(":$", "") -- Remove trailing :
+  clean_path = clean_path:gsub("!$", "") -- Remove trailing !
+  clean_path = clean_path:gsub("@$", "") -- Remove trailing @
+  clean_path = clean_path:gsub("#$", "") -- Remove trailing #
+  clean_path = clean_path:gsub("%$$", "") -- Remove trailing $
+  clean_path = clean_path:gsub("%%$", "") -- Remove trailing %
+  clean_path = clean_path:gsub("%^$", "") -- Remove trailing ^
+  clean_path = clean_path:gsub("&$", "") -- Remove trailing &
+  clean_path = clean_path:gsub("%*$", "") -- Remove trailing *
+  clean_path = clean_path:gsub(">$", "") -- Remove trailing >
+  clean_path = clean_path:gsub("<$", "") -- Remove trailing <
 
   -- 5. Try to resolve the path using multiple strategies
   local candidates = {}
