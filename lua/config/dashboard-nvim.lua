@@ -60,6 +60,7 @@ local fname = nil
 -- local fname = "family_guy_1"
 -- local fname = "south_park_1"
 -- local fname = "family_guy_2"
+-- local fname = "skull"
 -- local fname = "eyes" -- Now loaded from cache
 
 -- header_file_path will be set after loading from cache
