@@ -161,7 +161,15 @@ tmux_conf_urlscan_options="--compact --dedupe"
 # Key binding for vertical split and running opencode
 # bind-key o split-window -h "/home/devmiftahul/.opencode/bin/opencode"
 # Split window vertically, cd to current path, and run opencode
-bind-key o split-window -h -c "#{pane_current_path}" "/home/devmiftahul/.opencode/bin/opencode"
+bind-key o split-window -h -c "#{pane_current_path}" "/home/miftah/.opencode/bin/opencode"
+
+# Break the current pane out into its own brand-new session (default break-pane
+# only moves it to a new window in the SAME session). Runs through a real shell
+# so each step is its own tmux invocation (tmux's own "\;" chaining doesn't
+# apply once you're inside a shell string). The session name includes the
+# run-shell PID ($$), not just the pane id, because pane ids never change even
+# after the pane moves - reusing just the pane id collides on a second press.
+bind-key ! run-shell 'p="#{pane_id}"; s="brk_${p#%}_$$"; tmux new-session -d -s "$s" -n __ph; tmux break-pane -d -s "$p" -t "$s:"; tmux kill-window -t "$s:__ph"; tmux switch-client -t "$s"'
 
 # -- tpm -----------------------------------------------------------------------
 
