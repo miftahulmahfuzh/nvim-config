@@ -159,13 +159,21 @@ tmux_conf_urlscan_options="--compact --dedupe"
 
 # -- user customizations -------------------------------------------------------
 
-# Break the current pane out into its own brand-new session (default break-pane
-# only moves it to a new window in the SAME session). Runs through a real shell
+# ! reverted to stock break-pane (move pane to a new window in the SAME
+# session) - that's the daily-driver move after splitting a pane, and our
+# earlier override on this key had shadowed it. Bound explicitly (not just
+# left unbound) because once a stock key is overridden in a running server,
+# reloading the config does not bring the compiled-in default back on its own.
+bind-key ! break-pane
+
+# @ (physically next to ! - same Shift-row, one key over) breaks the current
+# pane out into its own brand-new session instead. Runs through a real shell
 # so each step is its own tmux invocation (tmux's own "\;" chaining doesn't
 # apply once you're inside a shell string). The session name includes the
 # run-shell PID ($$), not just the pane id, because pane ids never change even
-# after the pane moves - reusing just the pane id collides on a second press.
-bind-key ! run-shell 'p="#{pane_id}"; s="brk_${p#%}_$$"; tmux new-session -d -s "$s" -n __ph; tmux break-pane -d -s "$p" -t "$s:"; tmux kill-window -t "$s:__ph"; tmux switch-client -t "$s"'
+# after the pane moves - reusing just the pane id would collide on a second
+# press against the same pane.
+bind-key @ run-shell 'p="#{pane_id}"; s="brk_${p#%}_$$"; tmux new-session -d -s "$s" -n __ph; tmux break-pane -d -s "$p" -t "$s:"; tmux kill-window -t "$s:__ph"; tmux switch-client -t "$s"'
 
 # -- tpm -----------------------------------------------------------------------
 
