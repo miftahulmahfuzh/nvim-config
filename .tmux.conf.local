@@ -173,7 +173,21 @@ bind-key ! break-pane
 # run-shell PID ($$), not just the pane id, because pane ids never change even
 # after the pane moves - reusing just the pane id would collide on a second
 # press against the same pane.
-bind-key @ run-shell 'p="#{pane_id}"; s="brk_${p#%}_$$"; tmux new-session -d -s "$s" -n __ph; tmux break-pane -d -s "$p" -t "$s:"; tmux kill-window -t "$s:__ph"; tmux switch-client -t "$s"'
+#
+# Uses "tmux new" (not "new-session") deliberately: oh-my-tmux's startup
+# self-heal (_apply_bindings in .tmux/.tmux.conf) greps `tmux list-keys`
+# output for the literal substring "new-session" to find stock bindings it
+# needs to patch, re-serializes any match through `tmux list-keys` (which
+# double-quotes it) and re-sources that. That double-quoted round-trip runs
+# our shell text through tmux's OWN ${...}/$var config-file substitution,
+# and `${p#%}` (the % is not a valid variable-name character) isn't a valid
+# tmux variable, so tmux fails to parse the regenerated temp file with
+# "invalid environment variable" and blocks the terminal for a keypress on
+# every fresh tmux launch - self-healed a moment later by tmux's own retry
+# loop, but only after you press Enter. Spelling it "new" (a legitimate tmux
+# command abbreviation) keeps "new-session" out of the bound text entirely,
+# so this binding never gets caught by that grep in the first place.
+bind-key @ run-shell 'p="#{pane_id}"; s="brk_${p#%}_$$"; tmux new -d -s "$s" -n __ph; tmux break-pane -d -s "$p" -t "$s:"; tmux kill-window -t "$s:__ph"; tmux switch-client -t "$s"'
 
 # -- tpm -----------------------------------------------------------------------
 
