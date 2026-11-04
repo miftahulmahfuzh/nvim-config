@@ -3,6 +3,12 @@
   "coordinator": "orch-fix-bugs-nvim-0-12",
   "coordinator_session_id": "35f6a5f4-e5d2-421a-9650-53ecc33104af",
   "created": "2026-11-04T11:21:18+07:00",
+  "landed": {
+    "at": "2026-11-04T12:06:21+07:00",
+    "base": "main",
+    "commit": "edb8b0c2ae0f02a0e3fc56744ad21c3dc10afbeb",
+    "machine": "pc"
+  },
   "phases": [
     {
       "card": null,
@@ -176,7 +182,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T12:05:49+07:00",
+  "updated": "2026-11-04T12:06:21+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
