@@ -1545,6 +1545,10 @@ unset VERIFY_NVIM
 V=.claude/skills/verify-nvim-config/scripts/verify.sh
 P=$LIVE/.claude/skills/verify-nvim-config/features/lua
 lua1() { "$V" lua "$RUN" "$1" 2>/dev/null | sed -n 2p; }    # first line of the result
+deps_other() {   # deprecations.lua's lines minus health.md's two "fixed upstream, not moved here" (coordinator decision after phase 3)
+  "$V" lua "$RUN" "@$P/deprecations.lua" 2>/dev/null | tail -n +3 \
+    | grep -vF -e 'vim.lsp.codelens.refresh({ bufnr = bufnr}) is deprecated.' -e 'vim.validate{<table>} is deprecated.' | grep -c . || true
+}
 health_ok() {   # $1 = minimum sections; full :checkhealth minus the allow-list must be empty
   "$V" keys "$RUN" : checkhealth Enter
   "$V" wait "$RUN" 'vim.bo.filetype' checkhealth 120
@@ -1584,7 +1588,7 @@ out=$("$V" up --live); echo "$out"; RUN=$(sed -n 's/^RUN=//p' <<<"$out"); E=$VH/
 "$V" keys "$RUN" Enter
 [ "$(lua1 'tostring(vim.api.nvim_get_current_line():match("^vim%.[%w_]+") ~= nil)')" = true ]
 "$V" keys "$RUN" Escape Escape
-[ "$(lua1 "@$P/deprecations.lua")" = 0 ]                                    # no client.request, no fuzzy notice
+[ "$(deps_other)" = 0 ]                                                     # no client.request, no fuzzy notice (go.nvim codelens / glance vim.validate{} excepted)
 [ "$(lua1 'require("blink.cmp.fuzzy").implementation_type')" = rust ]
 [ "$(lua1 '(function() local d = vim.fn.stdpath("data") .. "/lazy/blink.cmp" return vim.fn.readfile(d .. "/target/release/version")[1] .. " " .. vim.trim(vim.fn.system({ "git", "-C", d, "describe", "--tags", "--exact-match" })) end)()')" = "v1.10.2 v1.10.2" ]
 [[ $(lua1 "@$P/noise.lua") == noise=0* ]]
@@ -1593,7 +1597,9 @@ out=$("$V" up --live); echo "$out"; RUN=$(sed -n 's/^RUN=//p' <<<"$out"); E=$VH/
 "$V" keys "$RUN" --paste 'x = undefined_thing'
 "$V" keys "$RUN" Escape Escape
 "$V" wait "$RUN" '#vim.diagnostic.get(0, {lnum = vim.fn.line(".") - 1}) > 0' true 60
-"$V" keys "$RUN" k j
+"$V" keys "$RUN" k
+"$V" wait "$RUN" 'vim.deep_equal(vim.b.diagnostics_pos, vim.api.nvim_win_get_cursor(0))' true 10   # the hold ran on the line above (lsp.md: k and j in separate sends)
+"$V" keys "$RUN" j
 "$V" wait "$RUN" '(function() for _, w in ipairs(vim.api.nvim_list_wins()) do if vim.api.nvim_win_get_config(w).relative ~= "" and vim.api.nvim_buf_get_lines(vim.api.nvim_win_get_buf(w), 0, 1, false)[1] == "Diagnostics:" then return vim.api.nvim_win_get_width(w) end end return 0 end)()' 100 15   # full-width float still opens at 100
 "$V" keys "$RUN" : 2 v s p l i t Enter
 "$V" keys "$RUN" k j
@@ -1613,7 +1619,7 @@ health_ok 20
 [[ $(lua1 "@$P/load_all.lua") == *' failed=0 unloaded=0' ]]
 [[ $(lua1 "@$P/noise.lua") == noise=0* ]]
 health_ok 22
-[ "$(lua1 "@$P/deprecations.lua")" = 0 ]                                    # no deprecation / blink fallback notice in the whole session
+[ "$(deps_other)" = 0 ]                                                     # no other deprecation / blink fallback notice in the whole session
 "$V" doctor "$RUN"                                                          # exit 0
 "$V" down "$RUN"
 [ -z "$(git -C "$LIVE" status --porcelain)" ]                               # verify wrote nothing into the checkout

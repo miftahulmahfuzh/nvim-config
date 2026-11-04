@@ -56,8 +56,9 @@ $V lua RUN "$MSGS"
 End state after the fix: `11` lines, line 1 `local x = = 1`, line 5 still `      local   msg = ...`
 (unformatted, as typed). The buffer has 11 lines, the cursor is `{ 1, 12 }`, and the notify
 history has `{ "WARN", { "stylua failed, buffer left unformatted: error: could not format from
-stdin: failed to format from stdin: error parsing:" } }`. `:messages` has `"sample.lua" 11L, ...
-written`.
+stdin: failed to format from stdin: error parsing:" } }`. The screen shows `"sample.lua" 11L, ...
+written`; `:messages` is empty (re-measured 2026-11-04 by nvim-0-12-clean's sweep: Neovim 0.12.6
+does not keep a write message in the history, `nvim --clean` alike).
 Before (base `a14aef9`, `silent %!stylua -`): `3` lines, line 1 `error: could not format from
 stdin: failed to format from stdin: error parsing:`, `:messages` `"sample.lua" 3L, 230B written`.
 The 11-line file was gone.
@@ -111,8 +112,9 @@ $V keys RUN : e Space main.go Enter; $V keys RUN 6 G A Space Escape; $V keys RUN
 $V cli RUN git diff main.go
 ```
 
-End state seen: `-	var x = a+b` / `+	x := a + b`, `+	fmt.Println(add(1, 2))`. `:messages`
-shows the file written twice (go.nvim rewrites after formatting).
+End state seen: `-	var x = a+b` / `+	x := a + b`, `+	fmt.Println(add(1, 2))`. The screen
+shows the file written twice (go.nvim rewrites after formatting); `:messages` does not keep the
+write messages on Neovim 0.12.6 (see the Lua block above).
 
 Python:
 

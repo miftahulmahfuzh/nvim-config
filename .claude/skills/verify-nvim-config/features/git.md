@@ -93,5 +93,21 @@ Before (akinsho `v2.1.0`, seeded `1104-132444-3165892` and `--live` `1104-132441
 - `:GitConflictListQf` and the Resolved refresh run `copen`, which moves the cursor into the quickfix window.
   Use `:cclose` before pressing a mapping or `:w`.
 - The conflict journey leaves WORK mid-merge (`conflict_b.txt` unresolved). Run it last, or in its own run.
+- After `ct`, `v:errmsg` holds `E565: Not allowed to change text or change window: copen`. Nothing shows,
+  and the list is right:
+  - git-conflict fires `User GitConflictResolved` twice for one resolution. The second firing comes
+    from its redraw hook, under textlock (`git-conflict.lua:673` → `process` → `parse_buffer`).
+  - On that firing, `config/git-conflict.lua`'s `silent! GitConflictListQf` fails in `copen`.
+  - The first firing already refreshed the list.
+
+  Recorded as known noise in [health.md](health.md); follow-up `P2-NVIM-R4JW` (nvim-0-12-clean
+  phase 4 sweep, runs `1104-135627-3767397`, `1104-135856-3841678`, trace `1104-135941-3872925`).
+- `,gp` (`:Git push`) ends at "Press ENTER or type command to continue". While that prompt is up,
+  `lua`/`wait` time out (10 s, `Caught deadly signal 'SIGTERM'` from the helper; the run's nvim lives).
+  Press `Enter` first.
+- Drive the `,ga`/`,gc`/`,gp` journey early in a run, or in a fresh one. After several other
+  journeys in the same run (tmux, `:checkhealth`, img2braille), the commit once went out with a blank
+  line instead of the written text, because nvim was still consuming earlier keys (phase 4 sweep, run
+  `1104-135407-3589592`, evidence `31`-`45`). It did not happen in a fresh run.
 - Do not use `version = "*"` on the fork: forks carry upstream's tags, so it would resolve to the deprecated
   `v2.1.0`. The spec pins `commit`.

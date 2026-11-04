@@ -30,7 +30,7 @@ $V keys RUN Escape Escape
 $V wait RUN '(function() for _, d in ipairs(vim.diagnostic.get(0, {lnum = 5})) do if d.source == "Pyright" then return d.code end end return "none" end)()' reportAssignmentType 60
 ```
 
-End states seen (seeded and `--live`, nvim 0.11.5): `wait ok ... lua_ls`, `wait ok ... gopls`,
+End states seen (seeded and `--live`, nvim 0.11.5; re-driven unchanged on 0.12.6 by nvim-0-12-clean phase 4): `wait ok ... lua_ls`, `wait ok ... gopls`,
 `wait ok ... pyright`. The client's command is `pyright-langserver`, and it resolves to the run's
 `.../xdg/data/nvim/mason/bin/pyright-langserver` (pyright 1.1.414 seeded, 1.1.407 live). `lsp.log`
 has `0` lines naming `delance`. After pasting `count: int = "three"` as line 6 of `app.py`, the
@@ -51,7 +51,9 @@ $V keys RUN G o
 $V keys RUN --paste 'x = undefined_thing'
 $V keys RUN Escape Escape
 $V wait RUN '#vim.diagnostic.get(0, {lnum = vim.fn.line(".") - 1}) > 0' true 60
-$V keys RUN k j
+$V keys RUN k
+$V wait RUN 'vim.deep_equal(vim.b.diagnostics_pos, vim.api.nvim_win_get_cursor(0))' true 10   # the hold ran on the line above
+$V keys RUN j                # a separate send: the cursor now differs from diagnostics_pos
 $V wait RUN '(function() for _, w in ipairs(vim.api.nvim_list_wins()) do if vim.api.nvim_win_get_config(w).relative ~= "" and vim.api.nvim_buf_get_lines(vim.api.nvim_win_get_buf(w), 0, 1, false)[1] == "Diagnostics:" then return vim.api.nvim_win_get_width(w) end end return 0 end)()' 100 15
 $V keys RUN : 2 v s p l i t Enter
 $V keys RUN k j
@@ -69,6 +71,12 @@ blink.cmp's `client.request is deprecated`, from the insert). On the base the `s
 `Error in CursorHold Autocommands for "*"` ... `util.lua:1760: Invalid 'width': expected positive Integer`
 and `Press ENTER` (same runs, `evidence/15-screen-narrow.txt`); press `Enter` before any `lua`/`wait`,
 which block on that prompt.
+
+`k` and `j` go in separate sends with the hold in between. In one `keys RUN k j` the cursor is back on
+the diagnostic line before the next CursorHold. When an earlier hold already recorded that position
+(diagnostics arrive while the cursor rests there), no new float opens, and the width-100 wait times
+out about 3 times in 4 (nvim-0-12-clean phase 4 sweep, runs `1104-135431-3607302`, `1104-135702-3789564`,
+`1104-135731-3798863`, `1104-135808-3822763`). The config is right; the recipe was racy.
 
 ### fidget health
 
