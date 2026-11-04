@@ -81,13 +81,14 @@ tree_hash() {
     -o -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -c1-16)
 }
 
-# PATH for every process the run owns. No ~/.opencode (the fake opencode comes first), no ~/.cargo,
-# no ~/.local/bin, nothing the caller exported.
+# PATH for every process the run owns: nvim's own directory, the tools below and the system dirs.
+# No per-user tool dir (~/.cargo, ~/.local/bin, a CLI installed under ~), nothing the caller exported.
 run_path() {
-  local dir=$1 p="$dir/bin:$(dirname "$NVIM_BIN")" t d
+  local p t d
+  p="$(dirname "$NVIM_BIN")"
   # The interpreters Mason's servers need, plus the external tools the config shells out to (fzf for
   # fzf-lua, rg for live_grep, jq for the JSON prettify mapping, ctags for vista), each by its own
-  # directory, so nothing else from the caller's PATH (opencode, cargo, ~/.local/bin) comes along.
+  # directory, so nothing else from the caller's PATH (cargo, ~/.local/bin, other dirs under ~) comes along.
   for t in "$PY" "$NODE" "$GO" fzf rg jq ctags; do
     t="$(command -v "$t" 2>/dev/null || true)"; [ -n "$t" ] || continue
     d="$(dirname "$t")"
@@ -100,14 +101,14 @@ run_path() {
 # askpass, no ssh) and the network namespace refuses everything anyway.
 run_env() {
   local dir=$1
-  echo env -i PATH="$(run_path "$dir")" HOME="$dir/home" USER="$(id -un)" SHELL=/bin/bash \
+  echo env -i PATH="$(run_path)" HOME="$dir/home" USER="$(id -un)" SHELL=/bin/bash \
     TERM=xterm-256color LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 TZ=Asia/Jakarta \
     XDG_CONFIG_HOME="$dir/xdg/config" XDG_DATA_HOME="$dir/xdg/data" XDG_STATE_HOME="$dir/xdg/state" \
     XDG_CACHE_HOME="$dir/xdg/cache" XDG_RUNTIME_DIR="$dir/xdg/runtime" TMPDIR="$dir/tmp" \
     GIT_CONFIG_GLOBAL="$dir/home/.gitconfig" GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0 \
     GIT_ASKPASS=/bin/false SSH_ASKPASS=/bin/false GIT_SSH_COMMAND=/bin/false \
     GOPATH="$dir/tmp/go" GOMODCACHE="$dir/tmp/go/mod" GOCACHE="$dir/tmp/go/cache" GOFLAGS=-mod=mod GOTOOLCHAIN=local \
-    npm_config_cache="$dir/tmp/npm" VERIFY_SINK="$dir/sink" CONFIG="$dir/xdg/config/nvim" WORK="$dir/work"
+    npm_config_cache="$dir/tmp/npm" CONFIG="$dir/xdg/config/nvim" WORK="$dir/work"
 }
 
 tmx() { tmux -S "$1/tmux.sock" "${@:2}"; }
@@ -209,20 +210,6 @@ cmd_seed() {
   ! grep -q '^FAIL' "$SEED/seed.log" || die "seed finished with failures (above)"
 }
 
-write_fake_opencode() {
-  # The real opencode is an AI CLI logged into the owner's accounts. This stand-in records what
-  # the config hands it (argv, cwd, EDITOR, and every byte later typed into its pane by send-keys).
-  cat >"$1/bin/opencode" <<'EOF'
-#!/bin/bash
-mkdir -p "$VERIFY_SINK"
-{ printf 'argv:'; printf ' [%s]' "$@"; echo; echo "cwd: $PWD"; echo "EDITOR: ${EDITOR:-}"; } >>"$VERIFY_SINK/opencode.log"
-echo "fake opencode (verify sink): $*"
-stty -icanon -echo 2>/dev/null || true
-exec cat >>"$VERIFY_SINK/opencode.stdin"
-EOF
-  chmod +x "$1/bin/opencode"
-}
-
 # Each nvim start gets its own socket (nvim-N.sock): on a restart the old nvim removes its socket
 # while the new one is already listening on the same path, which left a dead socket behind.
 nvim_sock() { echo "$1/nvim-$(meta "$1" nvim_gen).sock"; }
@@ -280,7 +267,7 @@ cmd_up() {
   esac
   run="$(date +%m%d-%H%M%S)-$$"
   dir="$VERIFY_HOME/$run"
-  mkdir -p "$dir"/{evidence,xdg/config/nvim,xdg/data/nvim,xdg/state,xdg/cache/nvim,xdg/runtime,home,tmp,bin,sink}
+  mkdir -p "$dir"/{evidence,xdg/config/nvim,xdg/data/nvim,xdg/state,xdg/cache/nvim,xdg/runtime,home,tmp}
   chmod 700 "$dir/xdg/runtime"
   snapshot "$root" "$dir/xdg/config/nvim" >/dev/null
   local filled=""
@@ -327,7 +314,6 @@ cmd_up() {
   if [ "$mode" = live ]; then cp "$LIVE_TMUX_CONF" "$dir/home/.tmux.conf"; else cp "$dir/xdg/config/nvim/.tmux.conf" "$dir/home/.tmux.conf"; fi
   cp "$dir/xdg/config/nvim/.tmux.conf.local" "$dir/home/.tmux.conf.local"
   printf '[user]\n\tname = verify\n\temail = verify@localhost\n[init]\n\tdefaultBranch = main\n[safe]\n\tdirectory = *\n' >"$dir/home/.gitconfig"
-  write_fake_opencode "$dir"
   # WORK: the fixture project nvim edits, a git repo whose origin is a bare repo in the run (so
   # `<leader>gp` pushes somewhere provable and nowhere real).
   cp -a "$SKILL/features/fixtures/work" "$dir/work"
@@ -431,8 +417,6 @@ cmd_doctor() {
   local r=0
   in_ns "$dir" curl -sS -m 5 -o /dev/null https://github.com/ 2>/dev/null || r=$?
   if [ "$r" = 0 ]; then echo "egress   FAIL github.com reachable from the run's namespace"; ok=0; else echo "egress   ok   github.com unreachable from the run's namespace (curl exit $r)"; fi
-  local oc; oc="$(lua_eval "$dir" 'vim.fn.exepath("opencode")' 2>&1)"
-  if [ "$oc" = "$dir/bin/opencode" ]; then echo "opencode ok   resolves to the run's fake ($oc)"; else echo "opencode FAIL resolves to '$oc', not the run's fake"; ok=0; fi
   local cb; cb="$(lua_eval "$dir" 'vim.fn["provider#clipboard#Executable"]()' 2>&1 || true)"
   echo "clipbrd  info provider '${cb}' (tmux = the run's own server buffer)"
   local origin; origin="$(git -C "$dir/work" remote get-url origin 2>/dev/null || true)"
@@ -669,12 +653,11 @@ stop_run() {
   [ -f "$dir/tmux-start.log" ] && cp "$dir/tmux-start.log" "$dir/evidence/"
   mkdir -p "$dir/evidence/logs"
   [ -d "$dir/xdg/state/nvim" ] && find "$dir/xdg/state/nvim" -maxdepth 1 -name '*.log' -exec cp {} "$dir/evidence/logs/" \;
-  [ -d "$dir/sink" ] && cp -r "$dir/sink" "$dir/evidence/sink" 2>/dev/null || true
   for _ in 1 2 3; do
     # Directories only: run files are hard links into the seed, and chmod on a link changes the
     # seed's file too (an earlier `chmod -R u+w` here made the seed writable again).
     find "$dir/xdg" "$dir/tmp" -type d ! -perm -200 -exec chmod u+w {} + 2>/dev/null || true
-    rm -rf "$dir/xdg" "$dir/home" "$dir/work" "$dir/tmp" "$dir/bin" "$dir/sink" "$dir/remote.git" 2>/dev/null && break
+    rm -rf "$dir/xdg" "$dir/home" "$dir/work" "$dir/tmp" "$dir/remote.git" 2>/dev/null && break
     sleep 0.5
   done
   rm -f "$dir/tmux.sock" "$dir"/nvim-*.sock "$dir/tmux-start.log"

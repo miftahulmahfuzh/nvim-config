@@ -64,7 +64,6 @@ on any FAIL.
 - `nvim`: answers on `nvim-N.sock` and is ready. `stdpath`: config/data/state/cache are the run's.
 - `code WARN`: the working tree changed since `up`/`sync`. `sync`.
 - `egress`: `curl https://github.com` from inside the namespace fails (exit 6).
-- `opencode`: `opencode` resolves to the run's fake (see Gotchas).
 - `clipbrd`: the clipboard provider is `tmux`, i.e. the run's own server buffer.
 - `git`: WORK's `origin` is the run's bare repo.
 - `seed` (seeded runs): the shared seed is unchanged. `live` (live runs): the owner's live
@@ -110,8 +109,8 @@ WORK (`features/fixtures/work/`) is a git repo with `sample.lua` (badly formatte
 ## Evidence
 
 `~/.local/state/nvim-config-verify/<run>/evidence/`: outside the repo, kept after `down`,
-numbered by drive order. `down` adds `messages-at-down.txt`, nvim's logs (`logs/lsp.log`,
-`mason.log`, `log`) and the opencode sink.
+numbered by drive order. `down` adds `messages-at-down.txt` and nvim's logs (`logs/lsp.log`,
+`mason.log`, `log`).
 
 - Drive the user's path: keys and mappings, not `lua` calls into the config's functions.
 - Capture the action and the state after it: the file on disk (`cli git diff`), the LSP clients,
@@ -139,13 +138,10 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
 - **Never driven, no flag turns it on.** A `git push` to any real remote (WORK's only remote is
   the run's bare repo; `GIT_SSH_COMMAND=/bin/false`, no global git config, no credentials, and no
   network anyway). Writing `~/.config/nvim` (deploying is the owner's `git -C ~/.config/nvim pull
-  --ff-only`, which `live` prints and never runs). The owner's tmux server (`-L default`). The
-  real `opencode` (an AI CLI logged into the owner's accounts): the run's PATH has a fake
-  `opencode` that records argv, cwd, EDITOR and every byte typed into its pane to
-  `evidence/sink/`. At this commit nothing calls `custom/opencode.lua`'s public functions, so no
-  journey reaches it. AI or Copilot-style plugins: none in the spec; `~/.local/share/nvim/avante`
-  and other leftovers are never copied. Clipboard: `+` goes to the run's tmux buffer, never the
-  Windows clipboard (no `clip.exe` on the run's PATH, no DISPLAY).
+  --ff-only`, which `live` prints and never runs). The owner's tmux server (`-L default`).
+  AI or Copilot-style plugins: none in the spec; `~/.local/share/nvim/avante` and other
+  leftovers are never copied. Clipboard: `+` goes to the run's tmux buffer, never the Windows
+  clipboard (no `clip.exe` on the run's PATH, no DISPLAY).
 - **No paid or messaging dependency** in the config, so there is no budget and no `--real` flag.
   If an AI plugin is added, classify it first: it would need the owner's login, so it is harmful.
 - **Downloads are the seed's job.** Runs have no network at all (`unshare -n`). This is a real
