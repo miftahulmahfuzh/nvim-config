@@ -81,7 +81,12 @@ local plugin_specs = {
   },
   {
     "nvim-treesitter/nvim-treesitter",
-    lazy = true,
+    -- `main`, the rewrite for Neovim 0.12+. `master` is archived and its textobjects break on 0.12;
+    -- without a pin a fresh install follows GitHub's default branch, whatever the lock says.
+    branch = "main",
+    -- main does not support lazy-loading: config.treesitter's FileType autocmd must exist before
+    -- the first buffer is read.
+    lazy = false,
     build = ":TSUpdate",
     config = function()
       require("config.treesitter")
@@ -90,7 +95,7 @@ local plugin_specs = {
   {
     "nvim-treesitter/nvim-treesitter-textobjects",
     event = "VeryLazy",
-    branch = "master",
+    branch = "main",
     config = function()
       require("config.treesitter-textobjects")
     end,
@@ -557,6 +562,8 @@ local plugin_specs = {
         ensure_installed = {
           "gofumpt",
           "stylua",
+          -- nvim-treesitter `main` compiles parsers with the `tree-sitter` CLI (>= 0.26.1).
+          "tree-sitter-cli",
         },
         auto_update = true,
         run_on_start = true,
