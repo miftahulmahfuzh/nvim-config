@@ -13,7 +13,7 @@
       "note": "running in own worktree",
       "package": "lua/` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-1.md",
-      "reported_at": "2026-11-04T11:26:10+07:00",
+      "reported_at": "2026-11-04T11:27:16+07:00",
       "satisfies": [
         "R1"
       ],
@@ -74,20 +74,20 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "7e18a5b",
       "depends_on": [
         4
       ],
       "difficulty": "EASY",
       "n": 5,
-      "note": null,
+      "note": "proof: verified-first-pass; merged by coordinator",
       "package": "verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-5.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T11:27:15+07:00",
       "satisfies": [
         "R10"
       ],
-      "status": "spawned",
+      "status": "done",
       "task_id": null,
       "title": "Deploy hint: fetch + merge --ff-only"
     },
@@ -176,7 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T11:26:10+07:00",
+  "updated": "2026-11-04T11:27:16+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
