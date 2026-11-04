@@ -19,7 +19,7 @@
         "R6"
       ],
       "status": "pending",
-      "task_id": null,
+      "task_id": "P1-NVIM-ZN89",
       "title": "verify.sh: sync keeps run_path, doctor checks PATH, Go tools on run PATH"
     },
     {
@@ -40,7 +40,7 @@
         "R6"
       ],
       "status": "pending",
-      "task_id": null,
+      "task_id": "P1-NVIM-4SP0",
       "title": "Config-side fixes: E216, CursorHold width, fidget integration"
     },
     {
@@ -61,7 +61,7 @@
         "R4"
       ],
       "status": "pending",
-      "task_id": null,
+      "task_id": "P1-NVIM-THTB",
       "title": "Plugin moves: blink.cmp v1, git-conflict deprecation-free fork"
     },
     {
@@ -81,7 +81,7 @@
         "R7"
       ],
       "status": "pending",
-      "task_id": null,
+      "task_id": "P1-NVIM-IS7R",
       "title": "Sweep, tmux true colour, health allow-list, evidence index, Deploy runbook"
     }
   ],

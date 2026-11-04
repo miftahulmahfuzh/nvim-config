@@ -38,6 +38,13 @@ answers on its socket, VimEnter ran and the VeryLazy plugins (fzf-lua) loaded. I
 the run's `XDG_CONFIG_HOME/nvim`. Startup `:messages` go to `evidence/00-up-messages.txt`, and
 errors in them are printed. The start screen is `00-up-screen.txt`.
 
+Every process a run starts gets the run's PATH, recorded as `run_path=` in the run's `meta`:
+nvim's own directory, the directories of `python3`, `node`, `go`, `fzf`, `rg`, `jq`, `ctags` and
+`golangci-lint` (the caller's Go bin, which holds every tool go.nvim runs: `~/.gvm/pkgsets/go1.25.7/global/bin`
+here), then `/usr/local/bin:/usr/bin:/bin`. No other per-user directory, nothing else from the
+caller's PATH. Inside nvim, Mason prepends its `mason/bin` (so Mason's `gofumpt` and `gopls` win)
+and go.nvim appends `$HOME/go/bin` once it loads.
+
 - **seed** (`$VERIFY_HOME/.seed`, 93 plugins, 13 treesitter parsers in `data/nvim/site`, 10 Mason
   packages with `tree-sitter-cli`, 590 MB)
   is the only step that goes online: GitHub (lazy clones), the Mason registry, npm, PyPI and the Go
@@ -60,8 +67,9 @@ errors in them are printed. The start screen is `00-up-screen.txt`.
   `site/`). `evidence/00-up-replaced.txt` shows live's and the seed's branch, commit and url.
 
 **Edited the config after `up`?** `$V sync RUN` re-snapshots and restarts nvim in the pane (as
-the owner would, by restarting nvim). tmux config changes need `down` + `up`: the running server
-keeps the config it started with.
+the owner would, by restarting nvim), on the PATH `up` recorded (`run_path=`), whatever the PATH
+of the shell that calls `sync`. tmux config changes need `down` + `up`: the running server keeps
+the config it started with.
 
 ## Doctor
 
@@ -71,6 +79,9 @@ on any FAIL.
 - `tmux` / `netns`: the run's server answers on its own socket and lives in its own network
   namespace (`netns` lists how many processes are inside).
 - `nvim`: answers on `nvim-N.sock` and is ready. `stdpath`: config/data/state/cache are the run's.
+- `path`: nvim's `vim.env.PATH`, minus Mason's prepended `mason/bin` and go.nvim's appended
+  `$HOME/go/bin`, equals the run's `run_path=`. A FAIL means nvim started on another PATH (a
+  caller's PATH leaked in).
 - `code WARN`: the working tree changed since `up`/`sync`. `sync`.
 - `egress`: `curl https://github.com` from inside the namespace fails (exit 6).
 - `clipbrd`: the clipboard provider is `tmux`, i.e. the run's own server buffer.

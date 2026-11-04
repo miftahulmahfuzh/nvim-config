@@ -107,6 +107,61 @@ cwd back at `<WORK>`, filetype `markdown`, one nvim-notify WARN `working directo
 deleted, now in <WORK>`, doctor exits 0. The startup case, `nvim` launched from a removed directory,
 ends the same way. It goes to the nearest existing parent, or `/`.
 
+### The run's PATH (`up`, `sync`, `doctor`)
+
+nvim starts on the PATH `up` recorded, and keeps it across `sync`:
+
+```sh
+$V up --live                                   # or $V up; note RUN, EVIDENCE
+D=$(dirname "$EVIDENCE")
+grep '^run_path=' "$D/meta"
+$V lua RUN 'vim.env.PATH'
+$V sync RUN
+$V lua RUN 'vim.env.PATH'
+$V doctor RUN | grep '^path'
+```
+
+End state seen: both `vim.env.PATH` reads are `<D>/xdg/data/nvim/mason/bin:` followed by `meta`'s
+`run_path` (nvim's dir, miniconda, node, `~/.gvm/gos/go1.25.7/bin`, `~/.fzf/bin`,
+`~/.gvm/pkgsets/go1.25.7/global/bin`, `/usr/local/bin:/usr/bin:/bin`), and doctor prints
+`path     ok`. Before the fix (base `9cea538`), the read after `sync` was the caller's whole PATH
+(`~/.opencode/bin`, `~/.cargo/bin`, `/mnt/c/...`) and doctor had no `path` line. Live
+`1104-130537-3002073`, seeded `1104-130602-3008952`.
+
+Fault injection (doctor catches a foreign PATH):
+
+```sh
+$V lua RUN 'vim.fn.setenv("PATH", vim.env.PATH .. ":/leak/bin")'
+$V doctor RUN; echo "exit=$?"
+```
+
+End state seen: `path     FAIL nvim's PATH is not the run's: ...:/leak/bin (run_path: ...)` and
+`exit=1`. Run `1104-130609-3013951`. A `--bare` run's doctor also prints `path     ok` (exit 0,
+`1104-130614-3017536`).
+
+go.nvim's tools are on the run PATH, Mason's still win:
+
+```sh
+$V keys RUN : e Space main.go Enter
+$V wait RUN 'package.loaded["go"] ~= nil' true 30
+$V lua RUN '{ gofumpt = vim.fn.exepath("gofumpt"), gopls = vim.fn.exepath("gopls"), lint = vim.fn.exepath("golangci-lint") }'
+$V keys RUN : checkhealth Space go Enter
+$V lua RUN 'table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")'
+```
+
+End state seen: `gofumpt` and `gopls` are `<D>/xdg/data/nvim/mason/bin/...`, and `lint` is
+`~/.gvm/pkgsets/go1.25.7/global/bin/golangci-lint`. The report has no `ERROR` line and no
+`Missing tool` line, and it shows `golangci-lint version: 2.10`. The 13 warnings that remain, the
+same in both modes, belong to the environment, not to the config: `GOBIN is not in PATH` (the run
+sets no GOBIN), six optional treesitter parsers (`gowork`, `gomod`, `gosum`, `sql`, `gotmpl`,
+`comment`), the summary `Some binaries are not installed`, `nvim-dap`, `nvim-dap-ui` and
+`nvim-dap-virtual-text: not installed/loaded` plus `Not all plugin installed` (dap is lazy-loaded
+and not loaded yet), and `nvim-treesitter main module loaded, WIP`. Phase 4's `features/health.md`
+records them. Before the fix: `ERROR Failed to run healthcheck for "go" plugin ... ENOENT ...
+'golangci-lint'` plus 19 `Missing tool` warnings (live `1104-130357-2992108`, seeded
+`1104-130404-2996131`). The base's `sync` hides that error, because the caller's leaked PATH has the
+Go bin. Live `1104-130537-3002073`, seeded `1104-130602-3008952`.
+
 ## Gotchas
 
 - gofumpt and stylua are kept by mason-tool-installer alone (`auto_update = true`,

@@ -90,19 +90,31 @@ tree_hash() {
 }
 
 # PATH for every process the run owns: nvim's own directory, the tools below and the system dirs.
-# No per-user tool dir (~/.cargo, ~/.local/bin, a CLI installed under ~), nothing the caller exported.
+# No per-user tool dir as such (~/.cargo, ~/.local/bin, ~/.opencode/bin), nothing else the caller exported.
 run_path() {
   local p t d
   p="$(dirname "$NVIM_BIN")"
   # The interpreters Mason's servers need, plus the external tools the config shells out to (fzf for
-  # fzf-lua, rg for live_grep, jq for the JSON prettify mapping, ctags for vista), each by its own
-  # directory, so nothing else from the caller's PATH (cargo, ~/.local/bin, other dirs under ~) comes along.
-  for t in "$PY" "$NODE" "$GO" fzf rg jq ctags; do
+  # fzf-lua, rg for live_grep, jq for the JSON prettify mapping, ctags for vista, golangci-lint for
+  # go.nvim: its directory is the caller's Go bin, which holds every tool go.nvim runs and lists in
+  # :checkhealth go), each by its own directory, so nothing else from the caller's PATH (cargo,
+  # ~/.local/bin, other dirs under ~) comes along. Inside nvim, Mason prepends its own bin, so
+  # Mason's gofumpt and gopls still win over the Go bin's copies.
+  for t in "$PY" "$NODE" "$GO" fzf rg jq ctags golangci-lint; do
     t="$(command -v "$t" 2>/dev/null || true)"; [ -n "$t" ] || continue
     d="$(dirname "$t")"
     case ":$p:/usr/local/bin:/usr/bin:/bin:" in *":$d:"*) ;; *) p="$p:$d" ;; esac
   done
   echo "$p:/usr/local/bin:/usr/bin:/bin"
+}
+
+# The PATH a run started with, as `up` recorded it (meta run_path=). `sync` and `doctor` use it, so
+# a call from a shell with another PATH (another agent, a cron, a login without gvm) still means the
+# run's PATH. A run started before run_path was recorded falls back to this caller's run_path.
+run_path_of() {
+  local p=""
+  [ -f "$1/meta" ] && p="$(meta "$1" run_path)"
+  if [ -n "$p" ]; then echo "$p"; else run_path; fi
 }
 
 # env -i plus the run's own values only. Git can never reach a credential (no global config, no
@@ -227,7 +239,11 @@ nvim_sock() { echo "$1/nvim-$(meta "$1" nvim_gen).sock"; }
 
 start_nvim_cmd() {
   # The pane runs the user's real entry point: `nvim`, from WORK, with a socket the driver reads.
-  echo "$NVIM_BIN --listen $(nvim_sock "$1")"
+  # PATH is set here, never inherited: tmux gives a pane spawned by a command client that has no
+  # session (`sync`'s respawn-pane, run from the caller's shell) that CLIENT's PATH, and it applies
+  # that after `respawn-pane -e`, so -e PATH=... cannot win. `up` and `sync` run this same command,
+  # so nvim always starts on the run's recorded PATH.
+  printf 'env PATH=%q %q --listen %q\n' "$(run_path_of "$1")" "$NVIM_BIN" "$(nvim_sock "$1")"
 }
 
 # Absolute symlinks and Mason's wrapper scripts name the data dir they were installed into; point
@@ -397,6 +413,7 @@ cmd_up() {
       sed -n 's/^live_fp=/live_fp=/p' "$dir/live.before"
     fi
     echo "size=$size"
+    echo "run_path=$(run_path)"
     echo "nvim_gen=1"
   } >"$dir/meta"
 
@@ -470,6 +487,15 @@ cmd_doctor() {
   else echo "nvim     FAIL not ready on $(basename "$(nvim_sock "$dir")")"; ok=0; fi
   echo "stdpath  info $(lua_eval "$dir" 'vim.fn.stdpath("config") .. " | " .. vim.fn.stdpath("data") .. " | " .. vim.fn.stdpath("state") .. " | " .. vim.fn.stdpath("cache")' 2>&1)"
   case "$(lua_eval "$dir" 'vim.fn.stdpath("data")' 2>&1)" in "$dir"/*) echo "stdpath  ok   data dir is the run's" ;; *) echo "stdpath  FAIL data dir is not under the run"; ok=0 ;; esac
+  # nvim's PATH must be the one the run started with. Two entries are nvim's own doing and are
+  # dropped before comparing: Mason prepends <data>/mason/bin, and go.nvim (no GOBIN set) appends
+  # $HOME/go/bin once it loads (ft=go or any `:`). Anything else came from a caller's PATH.
+  local np want; want="$(run_path_of "$dir")"
+  np="$(lua_eval "$dir" 'vim.env.PATH' 2>&1 || true)"
+  np="${np#"$dir/xdg/data/nvim/mason/bin:"}"
+  np="${np%":$dir/home/go/bin"}"
+  if [ "$np" = "$want" ]; then echo "path     ok   nvim's PATH is the run's run_path (plus Mason's bin, go.nvim's \$HOME/go/bin)"
+  else echo "path     FAIL nvim's PATH is not the run's: $np (run_path: $want)"; ok=0; fi
   sed 's/^/meta     /' "$dir/meta"
   [ "$(git -C "$root" rev-parse --short HEAD)" = "$(meta "$dir" head)" ] || echo "code     WARN HEAD moved since up/sync"
   if [ "$(tree_hash "$root")" != "$(meta "$dir" tree)" ]; then
@@ -651,7 +677,8 @@ cmd_sync() {
   if [ -n "$(sed -n '/\.tmux\.conf/p' <<<"$changes")" ]; then
     echo "verify: WARN the tmux config changed; the running server keeps the old one. down + up to drive the new one." >&2
   fi
-  # A config change takes effect on the next nvim start, as for the owner: restart nvim in its pane.
+  # A config change takes effect on the next nvim start, as for the owner: restart nvim in its pane,
+  # on the run's recorded PATH (start_nvim_cmd sets it; this respawn-pane would otherwise pass on ours).
   echo "nvim_gen=$(( $(meta "$dir" nvim_gen) + 1 ))" >>"$dir/meta"
   tmx "$dir" respawn-pane -k -t main -c "$dir/work" "$(start_nvim_cmd "$dir")"
   local ok=0

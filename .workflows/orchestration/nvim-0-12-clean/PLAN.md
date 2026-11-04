@@ -6,7 +6,7 @@
 **Worktree:** `/home/miftah/.worktrees/nvim/nvim-0-12-clean`
 **Branch:** `feature/nvim-0-12-clean` (base: `origin/main` @ `9cea538`; cut at `8bcb55c`, rebased onto `9cea538` fix(startup) ensure_cwd, which touches `lua/custom-autocmd.lua` and `features/startup.md` "Deleted working directory")
 **Phases:** 4 (+ the post-land **Deploy** section, run by the coordinator after it lands the set)
-**Status:** planned
+**Status:** phase 1/4 complete
 **Coordinator:** —
 
 ---
@@ -78,10 +78,10 @@ owner's tmux server.
 
 | # | Title | Satisfies | Package | Files | Depends on | Difficulty | Plan | TaskID | Card |
 |---|-------|-----------|---------|-------|-----------|------------|------|--------|------|
-| 1 | verify.sh: sync keeps run_path, doctor checks PATH, Go tools on run PATH | R1, R6 | verify skill | 4 | — | NORMAL | `.workflows/plan/nvim-0-12-clean/phase-1.md` | — | — |
-| 2 | Config-side fixes: E216, CursorHold width, fidget integration | R5, R3, R6 | `lua/` | 6 | 1 | EASY | `.workflows/plan/nvim-0-12-clean/phase-2.md` | — | — |
-| 3 | Plugin moves: blink.cmp v1, git-conflict deprecation-free fork | R2, R4 | `lua/` + verify skill + seed | 9 (+ seed lock, outside the repo) | 2 (and 1) | HARD | `.workflows/plan/nvim-0-12-clean/phase-3.md` | — | — |
-| 4 | Sweep, tmux true colour, health allow-list, evidence index, Deploy runbook | R6, R7 | verify skill + tmux + `lua/plugin_specs.lua` (render-markdown `opts`) | 12 | 3 | NORMAL | `.workflows/plan/nvim-0-12-clean/phase-4.md` | — | — |
+| 1 | verify.sh: sync keeps run_path, doctor checks PATH, Go tools on run PATH | R1, R6 | verify skill | 4 | — | NORMAL | `.workflows/plan/nvim-0-12-clean/phase-1.md` | P1-NVIM-ZN89 | — |
+| 2 | Config-side fixes: E216, CursorHold width, fidget integration | R5, R3, R6 | `lua/` | 6 | 1 | EASY | `.workflows/plan/nvim-0-12-clean/phase-2.md` | P1-NVIM-4SP0 | — |
+| 3 | Plugin moves: blink.cmp v1, git-conflict deprecation-free fork | R2, R4 | `lua/` + verify skill + seed | 9 (+ seed lock, outside the repo) | 2 (and 1) | HARD | `.workflows/plan/nvim-0-12-clean/phase-3.md` | P1-NVIM-THTB | — |
+| 4 | Sweep, tmux true colour, health allow-list, evidence index, Deploy runbook | R6, R7 | verify skill + tmux + `lua/plugin_specs.lua` (render-markdown `opts`) | 12 | 3 | NORMAL | `.workflows/plan/nvim-0-12-clean/phase-4.md` | P1-NVIM-IS7R | — |
 
 Phases run strictly sequentially 1 → 2 → 3 → 4. Edges are true dependencies: 2 needs 1's `sync` (its stash/sync
 before-after recipe would otherwise run nvim on the caller's PATH) and edits `features/startup.md` after 1; 3 edits
