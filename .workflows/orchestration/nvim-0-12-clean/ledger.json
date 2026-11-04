@@ -66,28 +66,28 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "bc60fda",
       "depends_on": [
         3
       ],
       "difficulty": "NORMAL",
       "n": 4,
-      "note": null,
+      "note": "lever phase-4-health.sh seeded+live exit 0 (tc PASS, checkhealth-minus-allow-list 0 with gopls and all loaded, load_all 17/0/0); sweep all features/*.md both modes matched; go codelens+glance validate recorded upstream (F6PG); ^I = config blink cmdline Tab fallback, kept (6CQH); E565 after ct kept, git-conflict.lua unchanged per Decision (R4JW); Deploy D5 fixed: deprecations excludes the 2 upstream lines + CursorHold k/j split (old would roll back); proof: verified-after-fix ~/.local/state/nvim-config-verify/1104-140507-4017271 + 1104-140519-4022631",
       "package": "verify skill + tmux + `lua/plugin_specs.lua` (render-markdown `opts`)",
       "plan": ".workflows/plan/nvim-0-12-clean/phase-4.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T14:08:00+07:00",
       "satisfies": [
         "R6",
         "R7"
       ],
-      "status": "pending",
-      "task_id": null,
+      "status": "done",
+      "task_id": "P1-NVIM-IS7R",
       "title": "Sweep, tmux true colour, health allow-list, evidence index, Deploy runbook"
     }
   ],
   "plan": "/home/miftah/.worktrees/nvim/nvim-0-12-clean/.workflows/orchestration/nvim-0-12-clean/PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "nvim-0-12-clean",
-  "updated": "2026-11-04T13:42:26+07:00",
+  "updated": "2026-11-04T14:08:00+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/nvim-0-12-clean"
 }
