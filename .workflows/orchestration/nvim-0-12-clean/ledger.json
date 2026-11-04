@@ -6,19 +6,19 @@
   "phases": [
     {
       "card": null,
-      "commit": null,
+      "commit": "2b75ff0",
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 1,
-      "note": null,
+      "note": "sync keeps run_path (env PATH= in start_nvim_cmd), meta run_path=, doctor path ok/FAIL, golangci-lint dir on run_path; go-health before measured pre-sync (base sync leak masks it); 13 env go warnings incl. 3 nvim-dap + 'Not all plugin installed' for phase 4 allow-list; proof: verified-first-pass ~/.local/state/nvim-config-verify/{1104-130537-3002073,1104-130602-3008952,1104-130609-3013951}",
       "package": "verify skill",
       "plan": ".workflows/plan/nvim-0-12-clean/phase-1.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T13:08:25+07:00",
       "satisfies": [
         "R1",
         "R6"
       ],
-      "status": "pending",
+      "status": "done",
       "task_id": "P1-NVIM-ZN89",
       "title": "verify.sh: sync keeps run_path, doctor checks PATH, Go tools on run PATH"
     },
@@ -40,7 +40,7 @@
         "R6"
       ],
       "status": "pending",
-      "task_id": "P1-NVIM-4SP0",
+      "task_id": null,
       "title": "Config-side fixes: E216, CursorHold width, fidget integration"
     },
     {
@@ -61,7 +61,7 @@
         "R4"
       ],
       "status": "pending",
-      "task_id": "P1-NVIM-THTB",
+      "task_id": null,
       "title": "Plugin moves: blink.cmp v1, git-conflict deprecation-free fork"
     },
     {
@@ -81,13 +81,13 @@
         "R7"
       ],
       "status": "pending",
-      "task_id": "P1-NVIM-IS7R",
+      "task_id": null,
       "title": "Sweep, tmux true colour, health allow-list, evidence index, Deploy runbook"
     }
   ],
   "plan": "/home/miftah/.worktrees/nvim/nvim-0-12-clean/.workflows/orchestration/nvim-0-12-clean/PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "nvim-0-12-clean",
-  "updated": "2026-11-04T13:02:16+07:00",
+  "updated": "2026-11-04T13:08:25+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/nvim-0-12-clean"
 }
