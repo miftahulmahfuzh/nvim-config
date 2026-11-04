@@ -46,6 +46,11 @@ LIVE_CONFIG="${VERIFY_LIVE_CONFIG:-$HOME/.config/nvim}"   # the owner's live con
 LIVE_DATA="${VERIFY_LIVE_DATA:-$HOME/.local/share/nvim}"
 LIVE_TMUX_CONF="$(readlink -f "$HOME/.tmux.conf" 2>/dev/null || echo "$HOME/.tmux.conf")"
 
+# Data a plugin keeps outside lazy/<name>, relative to the data dir's nvim/ (e.g. parsers it installs
+# under site/), space-separated per lazy plugin name. When `up --live` replaces that plugin from the
+# seed because its spec moved, each listed path that exists in the seed replaces the run's copy.
+declare -A PLUGIN_EXTRA_DATA=()
+
 die() { echo "verify: $*" >&2; exit 1; }
 
 repo_root() {
@@ -171,7 +176,7 @@ cmd_seed() {
   elif [ -f "$LIVE_CONFIG/lazy-lock.json" ]; then cp "$LIVE_CONFIG/lazy-lock.json" "$SEED/config/nvim/lazy-lock.json"; lock_from="live@$(git -C "$LIVE_CONFIG" --no-optional-locks rev-parse --short HEAD)"
   else rm -f "$SEED/config/nvim/lazy-lock.json"; lock_from=none; fi
   [ "$update" = 1 ] && { rm -f "$SEED/config/nvim/lazy-lock.json"; lock_from=latest; }
-  rm -f "$SEED/lock.orig.json"; [ -f "$SEED/config/nvim/lazy-lock.json" ] && cp "$SEED/config/nvim/lazy-lock.json" "$SEED/lock.orig.json"
+  rm -f "$SEED/lock.orig.json" "$SEED/lock.new.json"; [ -f "$SEED/config/nvim/lazy-lock.json" ] && cp "$SEED/config/nvim/lazy-lock.json" "$SEED/lock.orig.json"
   [ -d "$SEED/data" ] && chmod -R u+w "$SEED/data"
   : >"$SEED/seed.log"
   local path="$(dirname "$NVIM_BIN")"
@@ -187,12 +192,15 @@ cmd_seed() {
     GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/bin/false \
     SSH_ASKPASS=/bin/false GIT_SSH_COMMAND=/bin/false \
     GOPATH="$SEED/tmp/go" GOMODCACHE="$SEED/tmp/go/mod" GOCACHE="$SEED/tmp/go/cache" GOTOOLCHAIN=auto \
-    npm_config_cache="$SEED/tmp/npm" LIVE_LAZY="$LIVE_DATA/lazy" SEED_LOCK_ORIG="$SEED/lock.orig.json" SEED_LOG="$SEED/seed.log" SEED_UPDATE=$update \
+    npm_config_cache="$SEED/tmp/npm" LIVE_LAZY="$LIVE_DATA/lazy" SEED_LOCK_ORIG="$SEED/lock.orig.json" \
+    SEED_LOCK_OUT="$SEED/lock.new.json" SEED_LOG="$SEED/seed.log" SEED_UPDATE=$update \
     timeout 1800 "$NVIM_BIN" --headless -c "luafile $HERE/seed.lua" </dev/null >"$SEED/nvim.out" 2>&1 || rc=$?
   cat "$SEED/seed.log"
-  # The seed's lock = the commits actually checked out (lazy's rewrite misses the pins seed.lua made).
-  if [ -f "$SEED/lock.orig.json" ]; then cp "$SEED/lock.orig.json" "$SEED/lazy-lock.json"
-  elif [ -f "$SEED/config/nvim/lazy-lock.json" ]; then cp "$SEED/config/nvim/lazy-lock.json" "$SEED/lazy-lock.json"; fi
+  # The seed's lock = what seed.lua found checked out (branch, commit and origin url per plugin).
+  # Not lazy's rewrite (default branch for every pin) and not the old lock copied back (it would
+  # undo a plugin whose spec moved). No new lock (seed.lua died first) keeps the previous one.
+  if [ -s "$SEED/lock.new.json" ]; then cp "$SEED/lock.new.json" "$SEED/lazy-lock.json"
+  else echo "verify: seed.lua wrote no lock; $SEED/lazy-lock.json left as it was" >&2; fi
   # Files in the seed are read-only so a run's hard-linked copy can never write through into it
   # (an in-place write fails with EACCES in the run instead). Directories stay writable.
   find "$SEED/data" -type f -perm /222 -exec chmod a-w {} +
@@ -236,6 +244,10 @@ repoint_data() {
   return 0
 }
 
+# A plugin dir's origin url as stored in its .git/config, without a trailing / or .git. Never
+# `remote get-url`: that applies the caller's insteadOf rewrites (the owner's turn https into git@).
+origin_url() { git -C "$1" config --get remote.origin.url 2>/dev/null | sed 's#/*$##; s#\.git$##'; }
+
 # Read-only fingerprint of the owner's live dirs (names, sizes, mtimes; contents are never hashed
 # into anything that could change them). up records it, doctor and down compare.
 live_fingerprint() {
@@ -270,7 +282,7 @@ cmd_up() {
   mkdir -p "$dir"/{evidence,xdg/config/nvim,xdg/data/nvim,xdg/state,xdg/cache/nvim,xdg/runtime,home,tmp}
   chmod 700 "$dir/xdg/runtime"
   snapshot "$root" "$dir/xdg/config/nvim" >/dev/null
-  local filled=""
+  local filled="" replaced=""
   case "$mode" in
     seeded)
       seed_lock -s
@@ -293,17 +305,46 @@ cmd_up() {
       cp -a "$LIVE_DATA/lazy" "$LIVE_DATA/mason" "$dir/xdg/data/nvim/"
       [ -f "$LIVE_DATA/rplugin.vim" ] && cp -a "$LIVE_DATA/rplugin.vim" "$dir/xdg/data/nvim/"
       repoint_data "$dir" "$(dirname "$LIVE_DATA")"
-      # A plugin the update adds is not in the live dirs yet (live nvim would fetch it online on
-      # the next start). Take it from the verify seed, and say so.
+      # Two kinds of plugin come from the verify seed instead, and are said so:
+      # - filled: one the update adds is not in the live dirs yet (live nvim would fetch it online
+      #   on its next start).
+      # - replaced: one whose spec MOVED. The seed follows the spec (seed.lua); live keeps the old
+      #   one, because lazy never re-targets an installed plugin at startup. Moved = the seed lock's
+      #   branch differs from the live lock's, or the two dirs' origin urls differ. The run's lock
+      #   takes the seed's entry, and PLUGIN_EXTRA_DATA[name] comes from the seed too.
       if [ -d "$SEED/data/nvim/lazy" ]; then
-        local p
+        command -v jq >/dev/null || die "--live needs jq (to compare the seed lock with the live lock)"
+        seed_lock -s
+        local p x sb lb su lu lock="$dir/xdg/config/nvim/lazy-lock.json"
         for p in "$SEED/data/nvim/lazy"/*/; do
           p="$(basename "$p")"
-          [ -e "$dir/xdg/data/nvim/lazy/$p" ] && continue
           grep -q "\"$p\"" "$dir/xdg/config/nvim/lua/plugin_specs.lua" "$SEED/lazy-lock.json" 2>/dev/null || continue
+          if [ ! -e "$dir/xdg/data/nvim/lazy/$p" ]; then
+            cp -a "$SEED/data/nvim/lazy/$p" "$dir/xdg/data/nvim/lazy/" && chmod -R u+w "$dir/xdg/data/nvim/lazy/$p"
+            filled="$filled $p"
+            continue
+          fi
+          sb="$(jq -r --arg n "$p" '.[$n].branch // empty' "$SEED/lazy-lock.json" 2>/dev/null || true)"
+          [ -n "$sb" ] || continue
+          lb="$(jq -r --arg n "$p" '.[$n].branch // empty' "$lock" 2>/dev/null || true)"
+          su="$(origin_url "$SEED/data/nvim/lazy/$p")"
+          lu="$(origin_url "$dir/xdg/data/nvim/lazy/$p")"
+          [ "$sb" != "${lb:-$sb}" ] || [ "$su" != "$lu" ] || continue
+          echo "$p: live ${lb:-?}@$(git -C "$dir/xdg/data/nvim/lazy/$p" rev-parse --short HEAD 2>/dev/null) ${lu:-?} -> seed $sb@$(git -C "$SEED/data/nvim/lazy/$p" rev-parse --short HEAD 2>/dev/null) ${su:-?}" \
+            >>"$dir/evidence/00-up-replaced.txt"
+          rm -rf "$dir/xdg/data/nvim/lazy/$p"
           cp -a "$SEED/data/nvim/lazy/$p" "$dir/xdg/data/nvim/lazy/" && chmod -R u+w "$dir/xdg/data/nvim/lazy/$p"
-          filled="$filled $p"
+          jq --arg n "$p" --slurpfile s "$SEED/lazy-lock.json" '.[$n] = $s[0][$n]' "$lock" >"$lock.tmp" && mv -f "$lock.tmp" "$lock"
+          for x in ${PLUGIN_EXTRA_DATA[$p]:-}; do
+            [ -e "$SEED/data/nvim/$x" ] || continue
+            rm -rf "$dir/xdg/data/nvim/$x"
+            mkdir -p "$(dirname "$dir/xdg/data/nvim/$x")"
+            cp -a "$SEED/data/nvim/$x" "$dir/xdg/data/nvim/$x" && chmod -R u+w "$dir/xdg/data/nvim/$x"
+            echo "  + $x from the seed" >>"$dir/evidence/00-up-replaced.txt"
+          done
+          replaced="$replaced $p"
         done
+        flock -u 9
       fi
       [ -f "$REAL_HOME/.cache/nvim/dashboard_ascii_art.txt" ] && cp "$REAL_HOME/.cache/nvim/dashboard_ascii_art.txt" "$dir/xdg/cache/nvim/"
       ;;
@@ -331,6 +372,7 @@ cmd_up() {
       echo "live_head=$(git -C "$LIVE_CONFIG" --no-optional-locks rev-parse --short HEAD)"
       echo "live_dirty=$(git -C "$LIVE_CONFIG" --no-optional-locks status --porcelain | wc -l)"
       echo "filled_from_seed=${filled# }"
+      echo "replaced_from_seed=${replaced# }"
       sed -n 's/^live_fp=/live_fp=/p' "$dir/live.before"
     fi
     echo "size=$size"
@@ -357,6 +399,7 @@ cmd_up() {
     </dev/null >/dev/null 2>&1 &
   [ "$mode" = bare ] && echo "verify: --bare: no plugins, no Mason; nvim faces a fresh machine with no network" >&2
   [ -n "$filled" ] && echo "verify: --live: not in the live dirs, taken from the seed:$filled (live nvim would fetch these online on its next start)" >&2
+  [ -n "$replaced" ] && echo "verify: --live: spec moved (seed lock branch or origin url differs from live), replaced from the seed:$replaced (evidence/00-up-replaced.txt; live keeps the old ones until the owner runs :Lazy update on them)" >&2
 
   # Usable = nvim answers on its socket, VimEnter ran, and lazy's VeryLazy plugins (fzf-lua) loaded.
   local ok=0 dead=""
@@ -427,7 +470,7 @@ cmd_doctor() {
   if [ "$(meta "$dir" mode)" = live ]; then
     if [ "$(live_fingerprint)" = "$(meta "$dir" live_fp)" ]; then echo "live     ok   the owner's live config/plugins/Mason/tmux files unchanged since up"
     else echo "live     WARN the owner's live dirs changed since up (the owner may be using nvim; this run never writes them)"; fi
-    echo "live     info live checkout @ $(meta "$dir" live_head) (dirty $(meta "$dir" live_dirty)), filled from seed: $(meta "$dir" filled_from_seed)"
+    echo "live     info live checkout @ $(meta "$dir" live_head) (dirty $(meta "$dir" live_dirty)), filled from seed: $(meta "$dir" filled_from_seed), replaced from seed (spec moved): $(meta "$dir" replaced_from_seed)"
   fi
   if ! cmp -s "$dir/home/.tmux.conf.local" "$dir/xdg/config/nvim/.tmux.conf.local"; then
     echo "tmuxconf WARN oh-my-tmux rewrote the run's ~/.tmux.conf.local (self-heal): diff -u $dir/xdg/config/nvim/.tmux.conf.local $dir/home/.tmux.conf.local"
