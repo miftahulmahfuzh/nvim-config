@@ -1,3 +1,5 @@
+-- The server command is not set here: it comes from nvim-lspconfig's lsp/pyright.lua
+-- ({ "pyright-langserver", "--stdio" }), the binary Mason's `pyright` package puts on PATH.
 -- For what diagnostic is enabled in which type checking mode, check doc:
 -- https://github.com/microsoft/pyright/blob/main/docs/configuration.md#diagnostic-settings-defaults
 -- Currently, the pyright also has some issues displaying hover documentation:
@@ -20,7 +22,6 @@ local new_capability = {
 }
 
 return {
-  cmd = { "delance-langserver", "--stdio" },
   settings = {
     pyright = {
       -- disable import sorting and use Ruff for this
@@ -37,7 +38,7 @@ return {
         diagnosticSeverityOverrides = {
           deprecateTypingAliases = false,
         },
-        -- inlay hint settings are provided by pylance?
+        -- pyright itself serves no inlay hints; these keys are read by Pylance/basedpyright only
         inlayHints = {
           callArgumentNames = "partial",
           functionReturnTypes = true,
