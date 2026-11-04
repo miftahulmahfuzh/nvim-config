@@ -7,9 +7,8 @@ local api = vim.api
 -- STATE TRACKING
 -- ============================================================================
 
--- Track the current ASCII art window and buffer
-local ascii_art_win = nil
-local ascii_art_buf = nil
+-- Every window whose buffer has filetype "dashboard" shows the art; there is no other record of
+-- which windows those are, so a window the user moved to another buffer is never redrawn.
 
 -- Path to cache file for storing the selected ASCII art
 local cache_file = vim.fn.stdpath("cache") .. "/dashboard_ascii_art.txt"
@@ -144,104 +143,89 @@ local function load_saved_art()
 end
 
 ---
--- Updates the current ASCII art and refreshes the window if open.
+-- Draws the current art (fname) into a window: a fresh dashboard buffer, centred for that
+-- window's size, with the dashboard's buffer-local keymaps and window options. The buffer the
+-- window showed before is hidden, and Neovim wipes it once no window shows it (bufhidden=wipe).
+-- @param win The window to draw into.
+local function render_dashboard(win)
+  local header_file_path = vim.fn.stdpath("config") .. "/ascii_art/" .. fname .. ".txt"
+  local lines = load_ascii_art(header_file_path)
+
+  -- Find the longest line for horizontal centering
+  local max_width = 0
+  for _, line in ipairs(lines) do
+    max_width = math.max(max_width, vim.fn.strdisplaywidth(line))
+  end
+
+  -- Centre in this window, vertically and horizontally
+  local top_padding = math.max(0, math.floor((api.nvim_win_get_height(win) - #lines) / 2))
+  local left_padding = math.max(0, math.floor((api.nvim_win_get_width(win) - max_width) / 2))
+  local padding_str = string.rep(" ", left_padding)
+
+  local padded_lines = {}
+  for _ = 1, top_padding do
+    table.insert(padded_lines, "")
+  end
+  for _, line in ipairs(lines) do
+    table.insert(padded_lines, padding_str .. line)
+  end
+
+  local buf = api.nvim_create_buf(false, true)
+
+  -- Set buffer options
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].swapfile = false
+  vim.bo[buf].filetype = "dashboard"
+
+  -- Set buffer content
+  api.nvim_buf_set_lines(buf, 0, -1, false, padded_lines)
+  vim.bo[buf].modifiable = false
+
+  -- Set keymaps
+  local opts = { buffer = buf, silent = true, nowait = true }
+  vim.keymap.set("n", "q", ":qa<CR>", opts)
+  vim.keymap.set("n", "e", ":enew<CR>", opts)
+  vim.keymap.set("n", "<space>s", require("nvim-tree.api").tree.toggle, opts)
+
+  api.nvim_win_set_buf(win, buf)
+
+  -- Set window options, in that window, without moving the cursor out of the current one
+  api.nvim_win_call(win, function()
+    vim.opt_local.number = false
+    vim.opt_local.relativenumber = false
+    vim.opt_local.cursorline = false
+    vim.opt_local.cursorcolumn = false
+    vim.opt_local.colorcolumn = ""
+    vim.opt_local.list = false
+    vim.opt_local.signcolumn = "no"
+    vim.opt_local.foldcolumn = "0"
+    vim.opt_local.statuscolumn = ""
+  end)
+
+  -- Move cursor to end of line to show full ASCII art
+  vim.schedule(function()
+    vim.schedule(function()
+      if api.nvim_win_is_valid(win) and api.nvim_win_get_buf(win) == buf then
+        api.nvim_win_call(win, function()
+          vim.cmd("normal! $")
+        end)
+      end
+    end)
+  end)
+end
+
+---
+-- Switches to another ASCII art, saves the choice, and redraws every window showing the dashboard.
 -- @param art_name The name of the ASCII art to switch to.
 local function update_ascii_art(art_name)
   fname = art_name
-  local header_file_path = vim.fn.stdpath("config") .. "/ascii_art/" .. fname .. ".txt"
   save_current_art(art_name)
 
-  -- If there's an existing ASCII art window, update it
-  if ascii_art_win and api.nvim_win_is_valid(ascii_art_win) then
-    -- Create new buffer
-    local buf = api.nvim_create_buf(false, true)
-
-    -- Set buffer options
-    api.nvim_buf_set_option(buf, "bufhidden", "wipe")
-    api.nvim_buf_set_option(buf, "buftype", "nofile")
-    api.nvim_buf_set_option(buf, "swapfile", false)
-    api.nvim_buf_set_option(buf, "filetype", "dashboard")
-
-    -- Load new ASCII art
-    local lines = load_ascii_art(header_file_path)
-
-    -- Get window dimensions
-    local win_height = api.nvim_win_get_height(ascii_art_win)
-    local win_width = api.nvim_win_get_width(ascii_art_win)
-
-    -- Calculate padding
-    local max_width = 0
-    for _, line in ipairs(lines) do
-      max_width = math.max(max_width, vim.fn.strdisplaywidth(line))
+  for _, win in ipairs(api.nvim_list_wins()) do
+    if vim.bo[api.nvim_win_get_buf(win)].filetype == "dashboard" then
+      render_dashboard(win)
     end
-
-    local content_height = #lines
-    local top_padding = math.max(0, math.floor((win_height - content_height) / 2))
-    local left_padding = math.max(0, math.floor((win_width - max_width) / 2))
-    local padding_str = string.rep(" ", left_padding)
-
-    local padded_lines = {}
-    for _ = 1, top_padding do
-      table.insert(padded_lines, "")
-    end
-    for _, line in ipairs(lines) do
-      table.insert(padded_lines, padding_str .. line)
-    end
-
-    -- Set buffer content
-    api.nvim_buf_set_lines(buf, 0, -1, false, padded_lines)
-    api.nvim_buf_set_option(buf, "modifiable", false)
-
-    -- Replace window buffer
-    api.nvim_win_set_buf(ascii_art_win, buf)
-
-    -- Wipe old buffer if valid
-    if ascii_art_buf and api.nvim_buf_is_valid(ascii_art_buf) then
-      vim.schedule(function()
-        if api.nvim_buf_is_valid(ascii_art_buf) then
-          api.nvim_buf_delete(ascii_art_buf, { force = true })
-        end
-      end)
-    end
-
-    ascii_art_buf = buf
-
-    -- Set window options
-    local opts_win = ascii_art_win
-    vim.schedule(function()
-      if api.nvim_win_is_valid(opts_win) then
-        local old_win = api.nvim_get_current_win()
-        api.nvim_set_current_win(opts_win)
-
-        vim.opt_local.number = false
-        vim.opt_local.relativenumber = false
-        vim.opt_local.cursorline = false
-        vim.opt_local.cursorcolumn = false
-        vim.opt_local.colorcolumn = ""
-        vim.opt_local.list = false
-        vim.opt_local.signcolumn = "no"
-        vim.opt_local.foldcolumn = "0"
-        vim.opt_local.statuscolumn = ""
-
-        -- Set keymaps for new buffer
-        local opts = { buffer = buf, silent = true, nowait = true }
-        vim.keymap.set("n", "q", ":qa<CR>", opts)
-        vim.keymap.set("n", "e", ":enew<CR>", opts)
-        vim.keymap.set("n", "<space>s", require("nvim-tree.api").tree.toggle, opts)
-
-        api.nvim_set_current_win(old_win)
-      end
-    end)
-
-    -- Move cursor to end of line
-    vim.schedule(function()
-      vim.schedule(function()
-        if api.nvim_win_is_valid(ascii_art_win) then
-          api.nvim_set_current_win(ascii_art_win)
-          vim.cmd("normal! $")
-        end
-      end)
-    end)
   end
 end
 
@@ -305,7 +289,7 @@ local function select_bikini()
 end
 
 ---
--- Creates and displays the dashboard buffer in a split window
+-- Creates and displays the dashboard buffer in the current window or a right split
 -- @param split_mode Optional: "right" to open in vertical split on right
 local function create_dashboard(split_mode)
   -- Initialize fname from cache if not set
@@ -313,93 +297,12 @@ local function create_dashboard(split_mode)
     fname = load_saved_art()
   end
 
-  local header_file_path = vim.fn.stdpath("config") .. "/ascii_art/" .. fname .. ".txt"
-
-  local buf = api.nvim_create_buf(false, true)
-
-  -- Set buffer options
-  api.nvim_buf_set_option(buf, "bufhidden", "wipe")
-  api.nvim_buf_set_option(buf, "buftype", "nofile")
-  api.nvim_buf_set_option(buf, "swapfile", false)
-  api.nvim_buf_set_option(buf, "filetype", "dashboard")
-
-  -- Load ASCII art
-  local lines = load_ascii_art(header_file_path)
-
-  -- Find the longest line for horizontal centering
-  local max_width = 0
-  for _, line in ipairs(lines) do
-    max_width = math.max(max_width, vim.fn.strdisplaywidth(line))
-  end
-
-  -- Get window dimensions
-  local win_height = api.nvim_win_get_height(0)
-  local win_width = api.nvim_win_get_width(0)
-
-  -- Calculate vertical padding (center vertically)
-  local content_height = #lines
-  local top_padding = math.max(0, math.floor((win_height - content_height) / 2))
-
-  -- Calculate horizontal padding (center horizontally)
-  local left_padding = math.max(0, math.floor((win_width - max_width) / 2))
-  local padding_str = string.rep(" ", left_padding)
-
-  -- Add top padding
-  local padded_lines = {}
-  for _ = 1, top_padding do
-    table.insert(padded_lines, "")
-  end
-
-  -- Add content with horizontal centering
-  for _, line in ipairs(lines) do
-    table.insert(padded_lines, padding_str .. line)
-  end
-
-  -- Set buffer content
-  api.nvim_buf_set_lines(buf, 0, -1, false, padded_lines)
-  api.nvim_buf_set_option(buf, "modifiable", false)
-
-  -- Open in appropriate window
   if split_mode == "right" then
-    -- Create vertical split on right side
+    -- Create vertical split on right side; it becomes the current window
     vim.cmd("rightbelow vsplit")
-    local win = api.nvim_get_current_win()
-    api.nvim_win_set_buf(win, buf)
-
-    -- Track the window and buffer globally
-    ascii_art_win = win
-    ascii_art_buf = buf
-
-    -- Move cursor to end of line to show full ASCII art
-    vim.schedule(function()
-      vim.schedule(function()
-        if api.nvim_win_is_valid(win) then
-          api.nvim_set_current_win(win)
-          vim.cmd("normal! $")
-        end
-      end)
-    end)
-  else
-    -- Switch to the dashboard buffer (original behavior)
-    api.nvim_win_set_buf(0, buf)
   end
 
-  -- Set window options
-  vim.opt_local.number = false
-  vim.opt_local.relativenumber = false
-  vim.opt_local.cursorline = false
-  vim.opt_local.cursorcolumn = false
-  vim.opt_local.colorcolumn = ""
-  vim.opt_local.list = false
-  vim.opt_local.signcolumn = "no"
-  vim.opt_local.foldcolumn = "0"
-  vim.opt_local.statuscolumn = ""
-
-  -- Set keymaps
-  local opts = { buffer = buf, silent = true, nowait = true }
-  vim.keymap.set("n", "q", ":qa<CR>", opts)
-  vim.keymap.set("n", "e", ":enew<CR>", opts)
-  vim.keymap.set("n", "<space>s", require("nvim-tree.api").tree.toggle, opts)
+  render_dashboard(api.nvim_get_current_win())
 end
 
 -- ============================================================================
@@ -433,18 +336,6 @@ api.nvim_create_autocmd("BufLeave", {
           end
         end
       end)
-    end
-  end,
-})
-
--- Clean up tracking when window is closed
-api.nvim_create_autocmd("WinClosed", {
-  group = api.nvim_create_augroup("CustomDashboardWinCleanup", { clear = true }),
-  callback = function(args)
-    local closed_win = tonumber(args.match)
-    if closed_win == ascii_art_win then
-      ascii_art_win = nil
-      ascii_art_buf = nil
     end
   end,
 })
