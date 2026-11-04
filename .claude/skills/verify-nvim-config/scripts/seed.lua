@@ -116,6 +116,9 @@ step("treesitter parsers", function()
 end)
 
 -- Mason: the tools mason-tool-installer and mason-lspconfig ensure, installed synchronously.
+-- Nothing else is installing here: this file runs from `-c` before VimEnter (mason-tool-installer's
+-- run_on_start), mason-lspconfig skips ensure_installed in a headless nvim, and the config's own
+-- Mason spec installs nothing.
 step("mason packages", function()
   local registry = require("mason-registry")
   local done = false
@@ -140,15 +143,7 @@ step("mason packages", function()
   local pending = {}
   for _, name in ipairs(names) do
     local pkg = registry.get_package(name)
-    if pkg:is_installing() then
-      -- The config itself installs gofumpt on every start (plugin_specs.lua, mason's config).
-      pending[name] = true
-      vim.wait(600000, function()
-        return not pkg:is_installing()
-      end, 500)
-      pending[name] = nil
-      log("%s mason %s (installed by the config's own startup install)", pkg:is_installed() and "ok  " or "FAIL", name)
-    elseif pkg:is_installed() and not update then
+    if pkg:is_installed() and not update then
       log("ok   mason %s already installed", name)
     else
       pending[name] = true
