@@ -620,7 +620,8 @@ cmd_live() {
     diff -rq --exclude=.git --exclude=.claude --exclude=lazy-lock.json --exclude=__pycache__ --exclude='*_code_analyzer.md' "$LIVE_CONFIG" "$root" 2>&1 | sed "s#$LIVE_CONFIG#live#g; s#$root#checkout#g; s/^/  /" || true
     echo "tmux: ~/.tmux.conf -> $LIVE_TMUX_CONF; ~/.tmux.conf.local $(cmp -s "$REAL_HOME/.tmux.conf.local" "$root/.tmux.conf.local" && echo "== checkout's" || echo "DIFFERS from checkout's")"
     echo "live lock: $(jq length "$LIVE_CONFIG/lazy-lock.json" 2>/dev/null) plugins, modified $(date -d "@$(stat -c %Y "$LIVE_CONFIG/lazy-lock.json")" -Iseconds)"
-    echo "deploy (the owner's step, never run by verify): git -C $LIVE_CONFIG pull --ff-only"
+    # Not plain `git pull`: in the live checkout it fails with "Cannot fast-forward to multiple branches".
+    echo "deploy (the owner's step, never run by verify): git -C $LIVE_CONFIG fetch origin && git -C $LIVE_CONFIG merge --ff-only origin/main"
   } >"$out"
   cat "$out"
   echo "[evidence: $out]" >&2

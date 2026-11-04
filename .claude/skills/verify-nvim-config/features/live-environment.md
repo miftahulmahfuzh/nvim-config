@@ -10,8 +10,10 @@
 
 ## How to get to it (user POV)
 
-The owner deploys with `git -C ~/.config/nvim pull --ff-only` and restarts nvim. These two
-commands answer "what will that change, and will it work on my machine?" first.
+The owner deploys with `git -C ~/.config/nvim fetch origin &&
+git -C ~/.config/nvim merge --ff-only origin/main` (plain `git pull` fails in that checkout:
+"Cannot fast-forward to multiple branches") and restarts nvim. These two commands answer "what
+will that change, and will it work on my machine?" first.
 
 ## Driving it with verify.sh
 
@@ -40,4 +42,5 @@ in the run's Mason copy still named `~/.local/share/nvim`
   in `~/.local/share/nvim` are private state and stay where they are.
 - A plugin the checkout adds is not in the live dirs: it comes from the seed and is listed in
   `filled_from_seed` (run `seed` first). Live nvim would fetch it online on its next start.
-- Deploying (pulling into `~/.config/nvim`) is the owner's step. verify never runs it.
+- Deploying (fetch + `merge --ff-only origin/main` in `~/.config/nvim`) is the owner's step.
+  verify never runs it.
