@@ -132,12 +132,27 @@ M.colorscheme_conf = {
 	end,
 }
 
+-- Builtin (ships with nvim), so it loads with no plugins at all.
+M.fallback_colorscheme = "habamax"
+
 --- Use a random colorscheme from the pre-defined list of colorschemes.
 M.rand_colorscheme = function()
 	local colorscheme = utils.rand_element(vim.tbl_keys(M.colorscheme_conf))
 
 	-- Load the colorscheme and its settings
-	M.colorscheme_conf[colorscheme]()
+	local ok, err = pcall(M.colorscheme_conf[colorscheme])
+	if ok then
+		return
+	end
+
+	vim.cmd.colorscheme(M.fallback_colorscheme)
+	-- With lazy.nvim missing, no plugin colorscheme can load and plugin_specs.lua has already said why.
+	if package.loaded["lazy"] then
+		vim.notify(
+			string.format("colorscheme %s failed, using %s: %s", colorscheme, M.fallback_colorscheme, err),
+			vim.log.levels.WARN
+		)
+	end
 end
 
 return M

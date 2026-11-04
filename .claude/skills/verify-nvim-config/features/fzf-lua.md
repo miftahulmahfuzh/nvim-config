@@ -26,4 +26,3 @@ docs/guide.txt`, and `wait ok: vim.fn.expand("%:.") == docs/guide.txt`.
 
 - Needs the `fzf` binary (`~/.fzf/bin` on this machine), which the run's PATH carries by directory.
 - Inside the fzf terminal, typed keys go to fzf's prompt. `-l` is safe there; blink is not involved.
-- `fzf-lua.lua` requires `custom.opencode`, but no action calls it at this commit (see SKILL.md).

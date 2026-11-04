@@ -38,17 +38,26 @@ answers on its socket, VimEnter ran and the VeryLazy plugins (fzf-lua) loaded. I
 the run's `XDG_CONFIG_HOME/nvim`. Startup `:messages` go to `evidence/00-up-messages.txt`, and
 errors in them are printed. The start screen is `00-up-screen.txt`.
 
-- **seed** (`$VERIFY_HOME/.seed`, 93 plugins + 13 treesitter parsers + 9 Mason packages, ~570 MB)
+- **seed** (`$VERIFY_HOME/.seed`, 93 plugins, 13 treesitter parsers in `data/nvim/site`, 10 Mason
+  packages with `tree-sitter-cli`, 590 MB)
   is the only step that goes online: GitHub (lazy clones), the Mason registry, npm, PyPI and the Go
   proxy (Go may fetch a newer toolchain into the seed). The first seed starts from the owner's
-  **live** `lazy-lock.json` and pins every plugin to it, even where lazy will not (see Gotchas).
-  A plugin GitHub no longer serves is copied from the live dir. `seed --update` takes the latest
-  of everything instead (what `:Lazy update` / a fresh install would get). Seed files are read-only.
-  Runs hard-link them, and `doctor` fails if anything wrote through.
-- **live** copies (never links) `~/.local/share/nvim/{lazy,mason,rplugin.vim}`, the live
-  `lazy-lock.json`, the dashboard's cached art and the oh-my-tmux behind `~/.tmux.conf`. A plugin
-  the change adds is not in the live dirs yet, so it is taken from the seed and listed as
-  `filled_from_seed` (live nvim would fetch it online on its next start).
+  **live** `lazy-lock.json` and pins every plugin to it, even where lazy will not, except a plugin
+  whose spec moved, which follows the spec (see Gotchas). The seed's lock (`.seed/lazy-lock.json`)
+  is written from what is checked out: branch, commit and origin `url` per plugin. A plugin GitHub
+  no longer serves is copied from the live dir. `seed --update` takes the latest of everything
+  instead (what `:Lazy update` / a fresh install would get). Seed files are read-only. Runs
+  hard-link them, and `doctor` fails if anything wrote through.
+- **live** copies (never links) `~/.local/share/nvim/{lazy,mason,site,rplugin.vim}`, the live
+  `lazy-lock.json`, the dashboard's cached art and the oh-my-tmux behind `~/.tmux.conf`. Two kinds
+  of plugin come from the seed instead (so `seed` after changing a spec): one the change adds (not
+  in the live dirs yet; live nvim would fetch it online on its next start), listed as
+  `filled_from_seed`; and one whose spec **moved** (the seed lock's branch differs from the live
+  lock's, or the seed dir's `origin` url differs from the live dir's, or the seed lock pins a commit
+  the live clone has never fetched: a one-plugin bump written into the seed lock), listed as
+  `replaced_from_seed`. A replaced plugin also brings its seed lock entry into the run's lock, and
+  whatever `PLUGIN_EXTRA_DATA` in `verify.sh` names for it outside `lazy/` (e.g. parsers under
+  `site/`). `evidence/00-up-replaced.txt` shows live's and the seed's branch, commit and url.
 
 **Edited the config after `up`?** `$V sync RUN` re-snapshots and restarts nvim in the pane (as
 the owner would, by restarting nvim). tmux config changes need `down` + `up`: the running server
@@ -64,7 +73,6 @@ on any FAIL.
 - `nvim`: answers on `nvim-N.sock` and is ready. `stdpath`: config/data/state/cache are the run's.
 - `code WARN`: the working tree changed since `up`/`sync`. `sync`.
 - `egress`: `curl https://github.com` from inside the namespace fails (exit 6).
-- `opencode`: `opencode` resolves to the run's fake (see Gotchas).
 - `clipbrd`: the clipboard provider is `tmux`, i.e. the run's own server buffer.
 - `git`: WORK's `origin` is the run's bare repo.
 - `seed` (seeded runs): the shared seed is unchanged. `live` (live runs): the owner's live
@@ -110,8 +118,8 @@ WORK (`features/fixtures/work/`) is a git repo with `sample.lua` (badly formatte
 ## Evidence
 
 `~/.local/state/nvim-config-verify/<run>/evidence/`: outside the repo, kept after `down`,
-numbered by drive order. `down` adds `messages-at-down.txt`, nvim's logs (`logs/lsp.log`,
-`mason.log`, `log`) and the opencode sink.
+numbered by drive order. `down` adds `messages-at-down.txt` and nvim's logs (`logs/lsp.log`,
+`mason.log`, `log`).
 
 - Drive the user's path: keys and mappings, not `lua` calls into the config's functions.
 - Capture the action and the state after it: the file on disk (`cli git diff`), the LSP clients,
@@ -138,27 +146,46 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
 
 - **Never driven, no flag turns it on.** A `git push` to any real remote (WORK's only remote is
   the run's bare repo; `GIT_SSH_COMMAND=/bin/false`, no global git config, no credentials, and no
-  network anyway). Writing `~/.config/nvim` (deploying is the owner's `git -C ~/.config/nvim pull
-  --ff-only`, which `live` prints and never runs). The owner's tmux server (`-L default`). The
-  real `opencode` (an AI CLI logged into the owner's accounts): the run's PATH has a fake
-  `opencode` that records argv, cwd, EDITOR and every byte typed into its pane to
-  `evidence/sink/`. At this commit nothing calls `custom/opencode.lua`'s public functions, so no
-  journey reaches it. AI or Copilot-style plugins: none in the spec; `~/.local/share/nvim/avante`
-  and other leftovers are never copied. Clipboard: `+` goes to the run's tmux buffer, never the
-  Windows clipboard (no `clip.exe` on the run's PATH, no DISPLAY).
+  network anyway). Writing `~/.config/nvim` (deploying is the owner's `git -C ~/.config/nvim
+  fetch origin && git -C ~/.config/nvim merge --ff-only origin/main`, which `live` prints and
+  never runs; plain `git pull` fails in that checkout with "Cannot fast-forward to multiple
+  branches"). The owner's tmux server (`-L default`). AI or Copilot-style plugins: none in the
+  spec; `~/.local/share/nvim/avante` and other leftovers are never copied. Clipboard: `+` goes to
+  the run's tmux buffer, never the Windows clipboard (no `clip.exe` on the run's PATH, no
+  DISPLAY).
 - **No paid or messaging dependency** in the config, so there is no budget and no `--real` flag.
   If an AI plugin is added, classify it first: it would need the owner's login, so it is harmful.
 - **Downloads are the seed's job.** Runs have no network at all (`unshare -n`). This is a real
   fence: raw sockets and native code are blocked too, not only proxied HTTP. At startup, in every
-  mode, lazy's install of a missing plugin fails, and Mason's registry refresh and the config's
-  unconditional `get_package("gofumpt"):install()` fail into `mason.log`. Mason stages installs,
-  so the installed gofumpt stays.
-- **lazy ignores a lock entry whose branch differs from the spec's.** The spec leaves
-  `nvim-treesitter` unpinned, so lazy follows GitHub's default branch (`main`, the incompatible
-  rewrite) while the live lock says `master`. The seed pins every plugin to the lock with `git
-  checkout` and logs `pinned to the lock`. Treat `seed --update` as "what a fresh install gets".
-- **`phaazon/hop.nvim` is gone from GitHub.** The seed copies it from the live dir and removes
-  lazy's `hop.nvim.cloning` marker; a leftover marker makes lazy delete and re-clone on every start.
+  mode, lazy's install of a missing plugin fails, and Mason's registry refresh fails into
+  `mason.log`, as does any install mason-tool-installer or mason-lspconfig starts for a tool the
+  run lacks. Mason stages installs, so an installed tool stays.
+- **lazy never re-targets an installed plugin at startup.** A spec's url or branch change reaches
+  a plugin dir only through `:Lazy update`/`restore` (a url change deletes and re-clones) or a
+  fresh install, and an unpinned spec follows GitHub's default branch on install. So the seed pins
+  every plugin to its lock commit itself (`WARN ... pinned to the lock` when lazy left it
+  elsewhere), **unless the spec moved** (nvim-treesitter and its textobjects pin `branch = "main"`,
+  so a lock that still says `master` makes them MOVED): it names a `branch` other than the lock entry's, or a url
+  other than the one the entry was written from (the seed lock's `url`; for a lock taken from
+  live, the live dir's `origin`). A moved plugin follows the spec (fetch, or a fresh clone when
+  the url changed, then lazy's own target: branch tip, tag or version), the log says
+  `MOVED plugin <name>: ...`, and the new seed lock records it, so the next seed pins it there.
+  An unpinned spec is never moved by its branch alone. `up --live` replaces a moved plugin from
+  the seed (see Launch). Treat `seed --update` as "what a fresh install gets".
+- **`phaazon/hop.nvim` is gone from GitHub** (the page is a 404; `git ls-remote` asks for a
+  username, which is how GitHub answers a missing repo, and fails with `exit 128`). The
+  spec uses the maintained fork `smoka7/hop.nvim` (same API, same lock key `hop.nvim`). The
+  owner's live dir keeps the phaazon origin until the Deploy runbook re-points it (or `:Lazy update
+  hop.nvim`); until then `up --live` lists it in `replaced_from_seed`. The generic fallback stays: a plugin that did
+  not move but whose clone fails is copied from the live dir, and lazy's `<name>.cloning` marker
+  is removed (a leftover marker makes lazy delete and re-clone on every start).
+- **Another Neovim**: every subcommand runs `$VERIFY_NVIM` when set (default
+  `/opt/nvim-linux-x86_64/bin/nvim`). Export it for `seed` too: the seed runs the config.
+- **nvim-treesitter `main`** installs parsers into `data/nvim/site` with Mason's `tree-sitter`
+  CLI; the seed installs `tree-sitter-cli` first and removes a `master` checkout's stale
+  `parser/`. A one-plugin bump: write the commit into the seed lock with `jq` (keep `branch` and
+  `url`), `seed`, and `--live` replaces that plugin (its commit is unknown to the live clone). See
+  features/treesitter.md.
 - **The owner's port**: nothing in this repo listens on TCP, and CLAUDE.md pins no port. nvim
   and tmux use unix sockets under the run dir only (`nvim-N.sock`, a new one per (re)start;
   `tmux.sock`), so runs never collide with the owner's sessions or each other.
@@ -174,9 +201,12 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
   writes `log/` and `meta/` beside its binary. `up` rewrites every text file under `mason/` that
   names the source data dir (seed or live) to the run's copy, as a new file, so runs never write
   into the seed or the owner's `~/.local/share/nvim`.
-- **`--bare` fails at `require("lazy")`**: the bootstrap `git clone` result is not checked, so
-  E5113 aborts `init.lua` before diagnostics and colorscheme load. That is the expected end state
-  of a fresh machine offline, not a harness fault.
+- **`--bare` starts without plugins, by design**: the lazy bootstrap clone fails (no network),
+  `plugin_specs.lua` warns once (`lazy.nvim clone failed (git exit 128): plugins off until an online
+  restart`) and returns, and the rest of `init.lua` loads with the builtin `habamax` colorscheme (the
+  one run where asserting the name is valid). The warning is not an error: `up` prints nothing and
+  `doctor` says `messages ok`. Any `E\d+:` on a bare start is a regression. `sync` cannot restart a
+  bare run (it waits for fzf-lua): `down`, then `up --bare` again.
 - **The live checkout may lag.** `live` lists the commits it lacks; a `--live` run still drives
   the checkout's config, on live's plugins.
 - **Name clash check**: state lives in `~/.local/state/nvim-config-verify`; no sibling uses it.
