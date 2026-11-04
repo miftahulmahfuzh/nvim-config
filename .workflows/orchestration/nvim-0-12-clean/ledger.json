@@ -24,23 +24,23 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "63eecb4",
       "depends_on": [
         1
       ],
       "difficulty": "EASY",
       "n": 2,
-      "note": null,
+      "note": "E216 gone (nvim-tree disable_netrw), CursorHold skips <3-col windows, fidget avoid list; :messages keeps only blink client.request deprecation (R2, phase 3); J2 :e . must run last (pre-existing auto_close_win qall); stash replaced by copy-aside; proof: verified-first-pass ~/.local/state/nvim-config-verify/1104-131054-3055370 + 1104-131214-3068043",
       "package": "lua/",
       "plan": ".workflows/plan/nvim-0-12-clean/phase-2.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T13:21:19+07:00",
       "satisfies": [
         "R5",
         "R3",
         "R6"
       ],
-      "status": "pending",
-      "task_id": null,
+      "status": "done",
+      "task_id": "P1-NVIM-4SP0",
       "title": "Config-side fixes: E216, CursorHold width, fidget integration"
     },
     {
@@ -88,6 +88,6 @@
   "plan": "/home/miftah/.worktrees/nvim/nvim-0-12-clean/.workflows/orchestration/nvim-0-12-clean/PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "nvim-0-12-clean",
-  "updated": "2026-11-04T13:08:25+07:00",
+  "updated": "2026-11-04T13:21:19+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/nvim-0-12-clean"
 }
