@@ -45,23 +45,23 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "a20fead",
       "depends_on": [
         2,
         1
       ],
       "difficulty": "HARD",
       "n": 3,
-      "note": null,
+      "note": "blink.cmp v1.10.2 + git-conflict fork 63c5b42, --live rule live_lacks_seed_commit, seed fetches fuzzy lib; A2 narrowed to blink/git-conflict (go.nvim codelens + glance vim.validate -> phase 4); cmdline Tab ^I unchanged per invariant 5; journey recipe fixed (vim.p, separate Escapes); proof: verified-after-fix ~/.local/state/nvim-config-verify/{1104-133718-3342035,1104-133721-3343691,1104-133102-3257898,1104-133105-3259740}",
       "package": "lua/` + verify skill + seed",
       "plan": ".workflows/plan/nvim-0-12-clean/phase-3.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T13:42:26+07:00",
       "satisfies": [
         "R2",
         "R4"
       ],
-      "status": "pending",
-      "task_id": null,
+      "status": "done",
+      "task_id": "P1-NVIM-THTB",
       "title": "Plugin moves: blink.cmp v1, git-conflict deprecation-free fork"
     },
     {
@@ -88,6 +88,6 @@
   "plan": "/home/miftah/.worktrees/nvim/nvim-0-12-clean/.workflows/orchestration/nvim-0-12-clean/PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "nvim-0-12-clean",
-  "updated": "2026-11-04T13:21:19+07:00",
+  "updated": "2026-11-04T13:42:26+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/nvim-0-12-clean"
 }
