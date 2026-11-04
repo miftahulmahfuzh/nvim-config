@@ -132,7 +132,9 @@ local plugin_specs = {
     main = "render-markdown",
     name = "render-markdown", -- let's use the same name as the main file for clarity
     ft = "markdown",
-    opts = {}, -- The defaults are sane. Stop over-configuring.
+    -- latex/yaml need parsers config/treesitter.lua does not install (and latex a converter):
+    -- they never rendered, only warned in :checkhealth. Re-enable together with those parsers.
+    opts = { latex = { enabled = false }, yaml = { enabled = false } },
   },
   -- A list of colorscheme plugin you may want to try. Find what suits you.
   { "navarasu/onedark.nvim" },
