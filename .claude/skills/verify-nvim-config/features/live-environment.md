@@ -20,17 +20,27 @@ will that change, and will it work on my machine?" first.
 ```sh
 $V live                      # or: $V live RUN (saved into that run's evidence)
 $V up --live                 # MODE=live, ~7 s
-$V doctor RUN                # live ok ... unchanged since up; live info live checkout @ d7bf9fe
+$V doctor RUN                # live ok ... unchanged since up; live info live checkout @ a14aef9, ... replaced from seed (spec moved): ...
 ```
 
-End state seen (`live`): live `d7bf9fe`, checkout `24ff768`, 4 commits the live checkout lacks
-(all tmux), one differing file (`.tmux.conf.local`), and `~/.tmux.conf.local == checkout's`
-(the owner's real tmux file is already current; only the nvim clone is behind).
+End state seen (`live`, 2026-11-04): live `a14aef9`, checkout `43009df` (plus phase 9's
+uncommitted change), 34 commits the live checkout lacks (this set), the files that differ
+(`after/lsp/pyright.lua`, `init.lua`, `README.md`, `lua/colorschemes.lua`,
+`lua/config/{dashboard-nvim,fzf-lua,treesitter,treesitter-textobjects}.lua`,
+`lua/custom-autocmd.lua`, `lua/plugin_specs.lua`, `lua/custom/opencode.lua` only in live, plus
+`docs/plans` and `.workflows/`), `~/.tmux.conf.local == checkout's`, and the last line
+`deploy (the owner's step, never run by verify): git -C /home/miftah/.config/nvim fetch origin && git -C /home/miftah/.config/nvim merge --ff-only origin/main`.
 
-On `--live`, the journeys in lsp.md and format-on-save.md gave the same end states as seeded
-(lua_ls attaches, pyright 0 clients, stylua error text written over `sample.lua`), and no file
-in the run's Mason copy still named `~/.local/share/nvim`
-(`grep -rIlF "$HOME/.local/share/nvim" <run>/xdg/data/nvim/mason` printed 0).
+On `--live` with Neovim 0.12.6 (`VERIFY_NVIM`), every journey in this directory gave the same end
+state as seeded: lua_ls, gopls and pyright attach; a Lua syntax error leaves `sample.lua` intact with
+a warning; `vaf`/`gnn` select through nvim-treesitter `main`; `,bg` redraws the start screen; `f`
+shows hop hints. Before the owner deploys, `replaced_from_seed` lists `go.nvim hop.nvim
+nvim-treesitter nvim-treesitter-textobjects`, `evidence/00-up-replaced.txt` adds `+ site/parser`,
+`+ site/parser-info` and `+ site/queries` under nvim-treesitter, and nvim-notify shows
+`tree-sitter-cli: installing` / `failed to install` at start (live Mason has no tree-sitter CLI and
+the run is offline; see treesitter.md). No file in the run's Mason copy still named
+`~/.local/share/nvim` (`grep -rIlF "$HOME/.local/share/nvim" <run>/xdg/data/nvim/mason`
+printed 0).
 
 ## Gotchas
 
@@ -38,8 +48,14 @@ in the run's Mason copy still named `~/.local/share/nvim`
   are writable); `live` uses `git --no-optional-locks` so `git status` cannot refresh the live
   index. `doctor`/`down` compare a fingerprint of the live config, plugin and Mason dirs and the
   tmux files; `down` writes `live-at-down.txt`.
-- Only `lazy/`, `mason/` and `rplugin.vim` are copied. `avante/`, `backup/`, `telescope_history`
-  in `~/.local/share/nvim` are private state and stay where they are.
+- Only `lazy/`, `mason/`, `site/` (treesitter parsers and query links) and `rplugin.vim` are
+  copied. `avante/`, `backup/`, `telescope_history` in `~/.local/share/nvim` are private state and
+  stay where they are.
+- A live plugin is replaced from the seed (`replaced_from_seed`, details in
+  `evidence/00-up-replaced.txt`) when the seed moved it: another branch or remote than the live
+  lock/dir, or a commit the live clone has never fetched (a bump written into the seed lock). A
+  replaced plugin brings its seed lock entry and whatever `PLUGIN_EXTRA_DATA` in `verify.sh` names
+  for it (nvim-treesitter: `site/parser`, `site/parser-info`, `site/queries`).
 - A plugin the checkout adds is not in the live dirs: it comes from the seed and is listed in
   `filled_from_seed` (run `seed` first). Live nvim would fetch it online on its next start.
 - Deploying (fetch + `merge --ff-only origin/main` in `~/.config/nvim`) is the owner's step.

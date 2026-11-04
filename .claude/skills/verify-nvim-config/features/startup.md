@@ -2,11 +2,11 @@
 
 ## Sub-features
 
-- `init.lua`: version check (expects 0.11.5), globals (leader `,`, python3 required), options,
+- `init.lua`: version check (expects 0.12.6), globals (leader `,`, python3 required), options,
   autocmds, mappings, lazy.nvim with 93 plugin specs, diagnostics, a random colorscheme.
-- Mason (`mason.nvim`, mason-tool-installer for `gofumpt`/`stylua` with `auto_update` and
-  `run_on_start`, mason-lspconfig's `ensure_installed`). A start where every tool is installed and
-  matches the registry's version installs nothing.
+- Mason (`mason.nvim`, mason-tool-installer for `gofumpt`/`stylua`/`tree-sitter-cli` with
+  `auto_update` and `run_on_start`, mason-lspconfig's `ensure_installed`). A start where every tool
+  is installed and matches the registry's version installs nothing.
 - Three run modes: seeded, `--live`, `--bare`.
 
 ## How to get to it (user POV)

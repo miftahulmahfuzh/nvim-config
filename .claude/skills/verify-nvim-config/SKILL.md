@@ -38,7 +38,8 @@ answers on its socket, VimEnter ran and the VeryLazy plugins (fzf-lua) loaded. I
 the run's `XDG_CONFIG_HOME/nvim`. Startup `:messages` go to `evidence/00-up-messages.txt`, and
 errors in them are printed. The start screen is `00-up-screen.txt`.
 
-- **seed** (`$VERIFY_HOME/.seed`, 93 plugins + 13 treesitter parsers + 9 Mason packages, ~570 MB)
+- **seed** (`$VERIFY_HOME/.seed`, 93 plugins, 13 treesitter parsers in `data/nvim/site`, 10 Mason
+  packages with `tree-sitter-cli`, 590 MB)
   is the only step that goes online: GitHub (lazy clones), the Mason registry, npm, PyPI and the Go
   proxy (Go may fetch a newer toolchain into the seed). The first seed starts from the owner's
   **live** `lazy-lock.json` and pins every plugin to it, even where lazy will not, except a plugin
@@ -47,12 +48,13 @@ errors in them are printed. The start screen is `00-up-screen.txt`.
   no longer serves is copied from the live dir. `seed --update` takes the latest of everything
   instead (what `:Lazy update` / a fresh install would get). Seed files are read-only. Runs
   hard-link them, and `doctor` fails if anything wrote through.
-- **live** copies (never links) `~/.local/share/nvim/{lazy,mason,rplugin.vim}`, the live
+- **live** copies (never links) `~/.local/share/nvim/{lazy,mason,site,rplugin.vim}`, the live
   `lazy-lock.json`, the dashboard's cached art and the oh-my-tmux behind `~/.tmux.conf`. Two kinds
   of plugin come from the seed instead (so `seed` after changing a spec): one the change adds (not
   in the live dirs yet; live nvim would fetch it online on its next start), listed as
   `filled_from_seed`; and one whose spec **moved** (the seed lock's branch differs from the live
-  lock's, or the seed dir's `origin` url differs from the live dir's), listed as
+  lock's, or the seed dir's `origin` url differs from the live dir's, or the seed lock pins a commit
+  the live clone has never fetched: a one-plugin bump written into the seed lock), listed as
   `replaced_from_seed`. A replaced plugin also brings its seed lock entry into the run's lock, and
   whatever `PLUGIN_EXTRA_DATA` in `verify.sh` names for it outside `lazy/` (e.g. parsers under
   `site/`). `evidence/00-up-replaced.txt` shows live's and the seed's branch, commit and url.
@@ -162,8 +164,8 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
   a plugin dir only through `:Lazy update`/`restore` (a url change deletes and re-clones) or a
   fresh install, and an unpinned spec follows GitHub's default branch on install. So the seed pins
   every plugin to its lock commit itself (`WARN ... pinned to the lock` when lazy left it
-  elsewhere; at this commit that is `nvim-treesitter`, unpinned, default branch `main`, lock
-  `master`), **unless the spec moved**: it names a `branch` other than the lock entry's, or a url
+  elsewhere), **unless the spec moved** (nvim-treesitter and its textobjects pin `branch = "main"`,
+  so a lock that still says `master` makes them MOVED): it names a `branch` other than the lock entry's, or a url
   other than the one the entry was written from (the seed lock's `url`; for a lock taken from
   live, the live dir's `origin`). A moved plugin follows the spec (fetch, or a fresh clone when
   the url changed, then lazy's own target: branch tip, tag or version), the log says
@@ -177,6 +179,13 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
   hop.nvim`); until then `up --live` lists it in `replaced_from_seed`. The generic fallback stays: a plugin that did
   not move but whose clone fails is copied from the live dir, and lazy's `<name>.cloning` marker
   is removed (a leftover marker makes lazy delete and re-clone on every start).
+- **Another Neovim**: every subcommand runs `$VERIFY_NVIM` when set (default
+  `/opt/nvim-linux-x86_64/bin/nvim`). Export it for `seed` too: the seed runs the config.
+- **nvim-treesitter `main`** installs parsers into `data/nvim/site` with Mason's `tree-sitter`
+  CLI; the seed installs `tree-sitter-cli` first and removes a `master` checkout's stale
+  `parser/`. A one-plugin bump: write the commit into the seed lock with `jq` (keep `branch` and
+  `url`), `seed`, and `--live` replaces that plugin (its commit is unknown to the live clone). See
+  features/treesitter.md.
 - **The owner's port**: nothing in this repo listens on TCP, and CLAUDE.md pins no port. nvim
   and tmux use unix sockets under the run dir only (`nvim-N.sock`, a new one per (re)start;
   `tmux.sock`), so runs never collide with the owner's sessions or each other.
