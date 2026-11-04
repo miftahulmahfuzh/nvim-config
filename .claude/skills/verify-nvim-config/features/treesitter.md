@@ -37,6 +37,10 @@ $V keys RUN g r m                       # { "v", 2, 12, 2, 14 }: back to the gnn
 $V keys RUN Escape Escape
 $V keys RUN 2 G '>' '>' = =
 $V lua RUN 'vim.fn.getline(2)'          # "    return sum(item[\"price\"] for item in items)"
+# vac / vic: the fixtures ship no class, so write one into WORK first
+$V cli RUN sh -c 'printf "class Box:\n    def size(self):\n        return 1\n\n    def name(self):\n        return \"box\"\n" > cls.py'
+$V keys RUN : e Space cls.py Enter g g v a c   # then line("v"), line(".") = 1, 6; Escape Escape, j v i c = 2, 6
+$V cli RUN rm -f cls.py
 ```
 
 End state seen (Neovim 0.12.6, seeded and `--live`, 2026-11-04): `get_installed("parsers")` is

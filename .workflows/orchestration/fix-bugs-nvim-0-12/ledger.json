@@ -159,10 +159,10 @@
       ],
       "difficulty": "HARD",
       "n": 9,
-      "note": "proof: verified-after-fix; ff by coordinator",
+      "note": "independently verified on staged 0.12.6 (verifier runs 1104-120310-2725714 seeded, 1104-120417-2737543 live): 9/9 verified; map_drift: treesitter.md cls.py recipe fixed by coordinator",
       "package": "lua/`, `init.lua`, `README.md`, verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-9.md",
-      "reported_at": "2026-11-04T12:02:52+07:00",
+      "reported_at": "2026-11-04T12:05:49+07:00",
       "satisfies": [
         "R3",
         "R9",
@@ -176,7 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T12:02:52+07:00",
+  "updated": "2026-11-04T12:05:49+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
