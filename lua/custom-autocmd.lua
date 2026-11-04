@@ -249,10 +249,78 @@ api.nvim_create_autocmd("BufWritePre", {
 	group = api.nvim_create_augroup("auto_format_lua_on_save", { clear = true }),
 	pattern = "*.lua",
 	desc = "Format Lua file with stylua on save",
-	callback = function()
-		local cursor_pos = vim.api.nvim_win_get_cursor(0)
-		vim.cmd("silent %!stylua -")
-		vim.api.nvim_win_set_cursor(0, cursor_pos)
+	callback = function(args)
+		-- No stylua (Mason not set up yet): save the buffer as typed, say nothing.
+		if fn.executable("stylua") ~= 1 then
+			return
+		end
+
+		local bufnr = args.buf
+		local timeout_ms = 5000
+		local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+		-- The buffer as it would be written: every line ends with a newline.
+		local text = table.concat(lines, "\n") .. "\n"
+
+		local ok, result = pcall(function()
+			return vim.system({ "stylua", "-" }, { stdin = text, text = true }):wait(timeout_ms)
+		end)
+
+		-- On any failure the buffer is left exactly as typed and the write goes ahead.
+		local failure
+		if not ok then
+			failure = tostring(result)
+		elseif result.code == 124 then
+			failure = string.format("timed out after %d ms", timeout_ms)
+		elseif result.code ~= 0 then
+			failure = vim.trim((result.stderr or ""):match("[^\r\n]+") or "")
+			if failure == "" then
+				failure = "exit code " .. result.code
+			end
+		end
+		if failure then
+			vim.notify(
+				"stylua failed, buffer left unformatted: " .. failure,
+				vim.log.levels.WARN,
+				{ title = "nvim-config" }
+			)
+			return
+		end
+
+		-- stylua ends its output with a newline; drop it so the lines match the buffer's model.
+		local formatted = result.stdout or ""
+		if formatted:sub(-1) == "\n" then
+			formatted = formatted:sub(1, -2)
+		end
+		local new_lines = vim.split(formatted, "\n", { plain = true })
+		if vim.deep_equal(new_lines, lines) then
+			return
+		end
+
+		-- Remember the cursor of every window showing this buffer, not only the current one.
+		local cursors = {}
+		for _, win in ipairs(fn.win_findbuf(bufnr)) do
+			cursors[win] = api.nvim_win_get_cursor(win)
+		end
+
+		local set_ok, set_err = pcall(api.nvim_buf_set_lines, bufnr, 0, -1, false, new_lines)
+		if not set_ok then
+			vim.notify(
+				"stylua: could not update the buffer, left unformatted: " .. tostring(set_err),
+				vim.log.levels.WARN,
+				{ title = "nvim-config" }
+			)
+			return
+		end
+
+		-- Clamp to the new line count and line length: the restore must never throw,
+		-- because an error here aborts the write.
+		local line_count = api.nvim_buf_line_count(bufnr)
+		for win, pos in pairs(cursors) do
+			local row = math.max(1, math.min(pos[1], line_count))
+			local line = api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1] or ""
+			local col = math.max(0, math.min(pos[2], #line - 1))
+			pcall(api.nvim_win_set_cursor, win, { row, col })
+		end
 	end,
 })
 
