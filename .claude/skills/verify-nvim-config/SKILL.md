@@ -41,14 +41,21 @@ errors in them are printed. The start screen is `00-up-screen.txt`.
 - **seed** (`$VERIFY_HOME/.seed`, 93 plugins + 13 treesitter parsers + 9 Mason packages, ~570 MB)
   is the only step that goes online: GitHub (lazy clones), the Mason registry, npm, PyPI and the Go
   proxy (Go may fetch a newer toolchain into the seed). The first seed starts from the owner's
-  **live** `lazy-lock.json` and pins every plugin to it, even where lazy will not (see Gotchas).
-  A plugin GitHub no longer serves is copied from the live dir. `seed --update` takes the latest
-  of everything instead (what `:Lazy update` / a fresh install would get). Seed files are read-only.
-  Runs hard-link them, and `doctor` fails if anything wrote through.
+  **live** `lazy-lock.json` and pins every plugin to it, even where lazy will not, except a plugin
+  whose spec moved, which follows the spec (see Gotchas). The seed's lock (`.seed/lazy-lock.json`)
+  is written from what is checked out: branch, commit and origin `url` per plugin. A plugin GitHub
+  no longer serves is copied from the live dir. `seed --update` takes the latest of everything
+  instead (what `:Lazy update` / a fresh install would get). Seed files are read-only. Runs
+  hard-link them, and `doctor` fails if anything wrote through.
 - **live** copies (never links) `~/.local/share/nvim/{lazy,mason,rplugin.vim}`, the live
-  `lazy-lock.json`, the dashboard's cached art and the oh-my-tmux behind `~/.tmux.conf`. A plugin
-  the change adds is not in the live dirs yet, so it is taken from the seed and listed as
-  `filled_from_seed` (live nvim would fetch it online on its next start).
+  `lazy-lock.json`, the dashboard's cached art and the oh-my-tmux behind `~/.tmux.conf`. Two kinds
+  of plugin come from the seed instead (so `seed` after changing a spec): one the change adds (not
+  in the live dirs yet; live nvim would fetch it online on its next start), listed as
+  `filled_from_seed`; and one whose spec **moved** (the seed lock's branch differs from the live
+  lock's, or the seed dir's `origin` url differs from the live dir's), listed as
+  `replaced_from_seed`. A replaced plugin also brings its seed lock entry into the run's lock, and
+  whatever `PLUGIN_EXTRA_DATA` in `verify.sh` names for it outside `lazy/` (e.g. parsers under
+  `site/`). `evidence/00-up-replaced.txt` shows live's and the seed's branch, commit and url.
 
 **Edited the config after `up`?** `$V sync RUN` re-snapshots and restarts nvim in the pane (as
 the owner would, by restarting nvim). tmux config changes need `down` + `up`: the running server
@@ -151,12 +158,25 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
   mode, lazy's install of a missing plugin fails, and Mason's registry refresh fails into
   `mason.log`, as does any install mason-tool-installer or mason-lspconfig starts for a tool the
   run lacks. Mason stages installs, so an installed tool stays.
-- **lazy ignores a lock entry whose branch differs from the spec's.** The spec leaves
-  `nvim-treesitter` unpinned, so lazy follows GitHub's default branch (`main`, the incompatible
-  rewrite) while the live lock says `master`. The seed pins every plugin to the lock with `git
-  checkout` and logs `pinned to the lock`. Treat `seed --update` as "what a fresh install gets".
-- **`phaazon/hop.nvim` is gone from GitHub.** The seed copies it from the live dir and removes
-  lazy's `hop.nvim.cloning` marker; a leftover marker makes lazy delete and re-clone on every start.
+- **lazy never re-targets an installed plugin at startup.** A spec's url or branch change reaches
+  a plugin dir only through `:Lazy update`/`restore` (a url change deletes and re-clones) or a
+  fresh install, and an unpinned spec follows GitHub's default branch on install. So the seed pins
+  every plugin to its lock commit itself (`WARN ... pinned to the lock` when lazy left it
+  elsewhere; at this commit that is `nvim-treesitter`, unpinned, default branch `main`, lock
+  `master`), **unless the spec moved**: it names a `branch` other than the lock entry's, or a url
+  other than the one the entry was written from (the seed lock's `url`; for a lock taken from
+  live, the live dir's `origin`). A moved plugin follows the spec (fetch, or a fresh clone when
+  the url changed, then lazy's own target: branch tip, tag or version), the log says
+  `MOVED plugin <name>: ...`, and the new seed lock records it, so the next seed pins it there.
+  An unpinned spec is never moved by its branch alone. `up --live` replaces a moved plugin from
+  the seed (see Launch). Treat `seed --update` as "what a fresh install gets".
+- **`phaazon/hop.nvim` is gone from GitHub** (the page is a 404; `git ls-remote` asks for a
+  username, which is how GitHub answers a missing repo, and fails with `exit 128`). The
+  spec uses the maintained fork `smoka7/hop.nvim` (same API, same lock key `hop.nvim`). The
+  owner's live dir keeps the phaazon origin until the Deploy runbook re-points it (or `:Lazy update
+  hop.nvim`); until then `up --live` lists it in `replaced_from_seed`. The generic fallback stays: a plugin that did
+  not move but whose clone fails is copied from the live dir, and lazy's `<name>.cloning` marker
+  is removed (a leftover marker makes lazy delete and re-clone on every start).
 - **The owner's port**: nothing in this repo listens on TCP, and CLAUDE.md pins no port. nvim
   and tmux use unix sockets under the run dir only (`nvim-N.sock`, a new one per (re)start;
   `tmux.sock`), so runs never collide with the owner's sessions or each other.

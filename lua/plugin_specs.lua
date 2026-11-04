@@ -532,7 +532,7 @@ local plugin_specs = {
 
   -- Fast navigation (hop replaces built-in f)
   {
-    "phaazon/hop.nvim",
+    "smoka7/hop.nvim",
     event = "VeryLazy",
     config = function()
       require("config.hop")
