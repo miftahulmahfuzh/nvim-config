@@ -1,7 +1,6 @@
 -- /home/miftah/.config/nvim/lua/config/fzf-lua.lua
 
 local actions = require("fzf-lua.actions")
-local opencode = require("custom.opencode") -- Require our new, clean module
 
 require("fzf-lua").setup({
 	defaults = {
