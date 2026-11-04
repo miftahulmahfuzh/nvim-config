@@ -3,6 +3,12 @@
   "coordinator": "orch-nvim-0-12-clean",
   "coordinator_session_id": "fb996022-1e9f-4488-a84d-57240eb3a955",
   "created": "2026-11-04T13:02:16+07:00",
+  "landed": {
+    "at": "2026-11-04T14:10:55+07:00",
+    "base": "main",
+    "commit": "6036ef4cce2f326a0f3ba334617f9af918892166",
+    "machine": "pc"
+  },
   "phases": [
     {
       "card": null,
@@ -88,6 +94,6 @@
   "plan": "/home/miftah/.worktrees/nvim/nvim-0-12-clean/.workflows/orchestration/nvim-0-12-clean/PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "nvim-0-12-clean",
-  "updated": "2026-11-04T14:08:00+07:00",
+  "updated": "2026-11-04T14:10:55+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/nvim-0-12-clean"
 }

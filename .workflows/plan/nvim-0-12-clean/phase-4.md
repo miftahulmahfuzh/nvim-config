@@ -1566,7 +1566,7 @@ out=$("$V" up --live); echo "$out"; RUN=$(sed -n 's/^RUN=//p' <<<"$out"); E=$VH/
 [ ! -e "$E/00-up-replaced.txt" ]
 [ -z "$(tr -d '[:space:]' <"$E/00-up-messages.txt")" ]                     # :messages empty at startup
 "$V" doctor "$RUN" | tee "$BK/doctor.txt"                                  # exit 0 (pipefail)
-[ "$(lua1 'tostring(vim.version())')" = 0.12.6 ]
+[ "$(lua1 'string.format("%d.%d.%d", vim.version().major, vim.version().minor, vim.version().patch)')" = 0.12.6 ]   # tostring() appends the build (+v0.12.6); corrected at Deploy
 [ "$(lua1 'vim.v.errmsg == ""')" = true ]                                  # R5
 [[ $(lua1 "@$P/noise.lua") == noise=0* ]]
 [[ $(lua1 'vim.trim(vim.fn.system({ "tmux", "show-options", "-gv", "terminal-overrides" }))') == *'*256col*:Tc'* ]]   # the run's tmux, deployed .tmux.conf.local
@@ -1574,17 +1574,19 @@ out=$("$V" up --live); echo "$out"; RUN=$(sed -n 's/^RUN=//p' <<<"$out"); E=$VH/
 "$V" keys "$RUN" : e Space sample.lua Enter
 "$V" wait "$RUN" 'table.concat(vim.tbl_map(function(c) return c.name end, vim.lsp.get_clients({bufnr=0, name="lua_ls"})), ",")' lua_ls 60
 "$V" keys "$RUN" G o
-"$V" keys "$RUN" vim.
+"$V" keys "$RUN" vim.p
 "$V" wait "$RUN" 'tostring(require("blink.cmp").is_menu_visible())' true 30
 "$V" screen "$RUN" completion-lua
 "$V" keys "$RUN" Escape
 [ "$(lua1 'tostring(require("blink.cmp").is_menu_visible()) .. " " .. vim.fn.mode()')" = "false i" ]
-"$V" keys "$RUN" ap
+"$V" keys "$RUN" BSpace p
 "$V" wait "$RUN" 'tostring(require("blink.cmp").is_menu_visible())' true 30
 "$V" keys "$RUN" Tab
 "$V" keys "$RUN" Enter
 [ "$(lua1 'tostring(vim.api.nvim_get_current_line():match("^vim%.[%w_]+") ~= nil)')" = true ]
-"$V" keys "$RUN" Escape Escape
+"$V" keys "$RUN" Escape
+"$V" keys "$RUN" Escape
+"$V" wait "$RUN" 'vim.fn.mode()' n 10   # lsp.md's recipe (phase 3): vim.p, BSpace p, separate Escapes; corrected at Deploy
 [ "$(deps_other)" = 0 ]                                                     # no client.request, no fuzzy notice (go.nvim codelens / glance vim.validate{} excepted)
 [ "$(lua1 'require("blink.cmp.fuzzy").implementation_type')" = rust ]
 [ "$(lua1 '(function() local d = vim.fn.stdpath("data") .. "/lazy/blink.cmp" return vim.fn.readfile(d .. "/target/release/version")[1] .. " " .. vim.trim(vim.fn.system({ "git", "-C", d, "describe", "--tags", "--exact-match" })) end)()')" = "v1.10.2 v1.10.2" ]
