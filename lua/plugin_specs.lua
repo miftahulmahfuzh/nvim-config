@@ -543,10 +543,10 @@ local plugin_specs = {
   {
     "williamboman/mason.nvim",
     -- Removed `cmd` so it loads on startup as a dependency for other plugins.
+    -- gofumpt/stylua are ensured by mason-tool-installer below (installs a missing tool,
+    -- updates when the registry has a newer version); never install from here on every start.
     config = function()
       require("mason").setup()
-      -- Ensure gofumpt is installed
-      require("mason-registry").get_package("gofumpt"):install()
     end,
   },
   {

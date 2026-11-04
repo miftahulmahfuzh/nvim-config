@@ -148,9 +148,9 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
   If an AI plugin is added, classify it first: it would need the owner's login, so it is harmful.
 - **Downloads are the seed's job.** Runs have no network at all (`unshare -n`). This is a real
   fence: raw sockets and native code are blocked too, not only proxied HTTP. At startup, in every
-  mode, lazy's install of a missing plugin fails, and Mason's registry refresh and the config's
-  unconditional `get_package("gofumpt"):install()` fail into `mason.log`. Mason stages installs,
-  so the installed gofumpt stays.
+  mode, lazy's install of a missing plugin fails, and Mason's registry refresh fails into
+  `mason.log`, as does any install mason-tool-installer or mason-lspconfig starts for a tool the
+  run lacks. Mason stages installs, so an installed tool stays.
 - **lazy ignores a lock entry whose branch differs from the spec's.** The spec leaves
   `nvim-treesitter` unpinned, so lazy follows GitHub's default branch (`main`, the incompatible
   rewrite) while the live lock says `master`. The seed pins every plugin to the lock with `git
