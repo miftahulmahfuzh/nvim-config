@@ -137,11 +137,13 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
 
 - **Never driven, no flag turns it on.** A `git push` to any real remote (WORK's only remote is
   the run's bare repo; `GIT_SSH_COMMAND=/bin/false`, no global git config, no credentials, and no
-  network anyway). Writing `~/.config/nvim` (deploying is the owner's `git -C ~/.config/nvim pull
-  --ff-only`, which `live` prints and never runs). The owner's tmux server (`-L default`).
-  AI or Copilot-style plugins: none in the spec; `~/.local/share/nvim/avante` and other
-  leftovers are never copied. Clipboard: `+` goes to the run's tmux buffer, never the Windows
-  clipboard (no `clip.exe` on the run's PATH, no DISPLAY).
+  network anyway). Writing `~/.config/nvim` (deploying is the owner's `git -C ~/.config/nvim
+  fetch origin && git -C ~/.config/nvim merge --ff-only origin/main`, which `live` prints and
+  never runs; plain `git pull` fails in that checkout with "Cannot fast-forward to multiple
+  branches"). The owner's tmux server (`-L default`). AI or Copilot-style plugins: none in the
+  spec; `~/.local/share/nvim/avante` and other leftovers are never copied. Clipboard: `+` goes to
+  the run's tmux buffer, never the Windows clipboard (no `clip.exe` on the run's PATH, no
+  DISPLAY).
 - **No paid or messaging dependency** in the config, so there is no budget and no `--real` flag.
   If an AI plugin is added, classify it first: it would need the owner's login, so it is harmful.
 - **Downloads are the seed's job.** Runs have no network at all (`unshare -n`). This is a real
