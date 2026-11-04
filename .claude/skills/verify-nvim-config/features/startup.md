@@ -85,6 +85,28 @@ $V headless RUN +'lua io.stdout:write(vim.fn.execute("messages"), "\n", tostring
 End state seen: `lazy.nvim not loadable: plugins off until you delete <run>/xdg/data/nvim/lazy/lazy.nvim
 and restart online`, then `habamax`, with no traceback.
 
+### Deleted working directory
+
+When nvim's cwd is deleted, either before nvim starts or while it runs (for example a git worktree
+removed under it), `uv.cwd()` returns nil and `vim.fs.abspath()` asserts. On the base, dropbar →
+mini.icons → `vim.filetype.match` then printed `vim.schedule callback: vim/fs:837: assertion failed!`
+and a Press ENTER prompt for every new file name. `ensure_cwd` in `lua/custom-autocmd.lua` runs at
+startup and on cursor/buffer/focus events, and moves nvim to the nearest directory that still exists:
+
+```sh
+$V keys RUN : e Space sample.lua Enter
+$V lua RUN 'vim.fn.mkdir(vim.uv.cwd() .. "/gone", "p"); vim.cmd.cd(vim.uv.cwd() .. "/gone"); vim.fn.delete(vim.uv.cwd(), "rf"); return tostring(vim.uv.cwd())'   # nil
+$V keys RUN : e Space <WORK>/claude-prompt-1234.md Enter   # absolute path: a name mini.icons has not cached
+$V keys RUN i x Escape j k
+$V lua RUN 'vim.uv.cwd() .. " | " .. vim.bo.filetype'       # "<WORK> | markdown"
+$V lua RUN 'vim.inspect(vim.tbl_map(function(n) return n.message end, require("notify").history()))'
+```
+
+End state seen (0.12.6, seeded and `--live`, 2026-11-04): no assertion on screen or in `:messages`,
+cwd back at `<WORK>`, filetype `markdown`, one nvim-notify WARN `working directory <WORK>/gone was
+deleted, now in <WORK>`, doctor exits 0. The startup case, `nvim` launched from a removed directory,
+ends the same way. It goes to the nearest existing parent, or `/`.
+
 ## Gotchas
 
 - gofumpt and stylua are kept by mason-tool-installer alone (`auto_update = true`,

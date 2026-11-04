@@ -5,6 +5,38 @@ local api = vim.api
 
 local utils = require("utils")
 
+-- Keep a working directory that exists. When nvim's cwd is deleted (a git worktree removed while nvim,
+-- or the process that launched it, stood in it), uv.cwd() returns nil and every vim.fs.abspath() call
+-- fails its assert. vim.filetype.match() calls it, so mini.icons (via dropbar) raises
+-- "vim/fs:837: assertion failed!" on every redraw of a new file name. Move to the nearest directory
+-- that still exists instead.
+local last_cwd = vim.uv.cwd() or vim.env.PWD
+
+local function ensure_cwd()
+	local cwd = vim.uv.cwd()
+	if cwd then
+		last_cwd = cwd
+		return
+	end
+	local dir = last_cwd or vim.env.HOME
+	while dir ~= "/" and not vim.uv.fs_stat(dir) do
+		dir = vim.fs.dirname(dir)
+	end
+	vim.cmd.cd(fn.fnameescape(dir))
+	vim.notify(
+		string.format("working directory %s was deleted, now in %s", last_cwd or "?", dir),
+		vim.log.levels.WARN,
+		{ title = "nvim-config" }
+	)
+	last_cwd = dir
+end
+
+ensure_cwd()
+api.nvim_create_autocmd({ "DirChanged", "FocusGained", "BufEnter", "CursorMoved", "CursorMovedI", "CursorHold", "TermLeave" }, {
+	group = api.nvim_create_augroup("ensure_cwd", { clear = true }),
+	callback = ensure_cwd,
+})
+
 -- Display a message when the current file is not in utf-8 format.
 -- Note that we need to use `unsilent` command here because of this issue:
 -- https://github.com/vim/vim/issues/4379
