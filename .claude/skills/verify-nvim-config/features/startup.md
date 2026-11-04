@@ -39,11 +39,30 @@ Package(name=gofumpt)` on every start (a `go install mvdan.cc/gofumpt@v0.12.0`).
 Fault injection (fresh machine, no network):
 
 ```sh
-$V up --bare               # prints the startup errors, MODE=bare
+$V up --bare               # MODE=bare; no "startup :messages contain errors"
+cat EVIDENCE/00-up-messages.txt
+$V lua RUN '{ colors = vim.g.colors_name, underline = vim.diagnostic.config().underline, severity_sort = vim.diagnostic.config().severity_sort, leader = vim.g.mapleader, save = vim.fn.maparg("<leader>w", "n"), lazy = package.loaded.lazy ~= nil, lazy_dir = vim.fn.isdirectory(vim.fn.stdpath("data") .. "/lazy/lazy.nvim") }'
+$V doctor RUN
 ```
 
-End state seen: `E5113: ... plugin_specs.lua:587: module 'lazy' not found`, the dashboard absent,
-`[No Name]` buffer. `doctor` reports `nvim info --bare run: 1`.
+End state seen: `00-up-messages.txt` holds one line (WarningMsg): `lazy.nvim clone failed (git exit
+128): plugins off until an online restart`. The Lua table is `colors = "habamax", underline = false,
+severity_sort = true, leader = ",", save = "<Cmd>update<CR>", lazy = false, lazy_dir = 0`, which means
+diagnostic-conf ran, the builtin fallback colorscheme is active, mappings are in place, and the partial
+clone was deleted. The screen shows a `[No Name]` buffer and no dashboard (the dashboard is a plugin).
+`doctor` reports `nvim info --bare run: 1` and `messages ok   no errors in :messages`.
+The warning shows on the command line at start, but the harness's client attach resizes the pane
+and the redraw can clear it, so read `00-up-messages.txt`, not the screen.
+
+A `lazy.nvim` dir that exists but cannot load (an old interrupted clone):
+
+```sh
+mkdir -p ~/.local/state/nvim-config-verify/RUN/xdg/data/nvim/lazy/lazy.nvim
+$V headless RUN +'lua io.stdout:write(vim.fn.execute("messages"), "\n", tostring(vim.g.colors_name), "\n")' +qa
+```
+
+End state seen: `lazy.nvim not loadable: plugins off until you delete <run>/xdg/data/nvim/lazy/lazy.nvim
+and restart online`, then `habamax`, with no traceback.
 
 ## Gotchas
 
@@ -51,8 +70,12 @@ End state seen: `E5113: ... plugin_specs.lua:587: module 'lazy' not found`, the 
   mason's `config` on every start. With network, that is a download plus `go install` per nvim
   launch (Go may first fetch a 1.26 toolchain), and quitting fast aborts it with the message above.
   `mason-tool-installer` already ensures gofumpt.
-- Product finding (base): the lazy bootstrap (`vim.fn.system { "git", "clone", ... }`) never
-  checks the result, so an offline first start dies with E5113 and skips the rest of `init.lua`.
-- Never assert the colorscheme name: `utils.rand_int` seeds with `os.time()`.
+- With lazy.nvim missing, `plugin_specs.lua` returns before the spec table: no plugin command
+  exists (`:Lazy`, `:Mason`, `:FzfLua`), and `colorschemes.lua` falls back to `habamax` without a
+  second message. With lazy loaded, a plugin scheme that fails also falls back to `habamax`, but warns
+  with the scheme name and its error. `verify.sh sync` cannot restart a bare run (it waits for
+  fzf-lua). Use `down`, then `up --bare` again.
+- Never assert the colorscheme name on a seeded or `--live` run: `utils.rand_int` seeds with
+  `os.time()`. On `--bare` it is always `habamax` (the builtin fallback).
 - `loaded` counts depend on what the dashboard and VeryLazy pulled in; assert `count`, not
   `loaded`.

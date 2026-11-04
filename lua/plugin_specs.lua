@@ -5,17 +5,39 @@ local utils = require("utils")
 local plugin_dir = vim.fn.stdpath("data") .. "/lazy"
 local lazypath = plugin_dir .. "/lazy.nvim"
 
+-- Without lazy.nvim no plugin can load: say so once, as a warning, and return, so the rest of
+-- init.lua (options, mappings, diagnostics, a builtin colorscheme) still loads.
+local function disable_plugins(cause, retry)
+  vim.api.nvim_echo({
+    { string.format("lazy.nvim %s: plugins off until %s", cause, retry), "WarningMsg" },
+  }, true, {})
+end
+
 if not vim.uv.fs_stat(lazypath) then
-  vim.fn.system {
+  local cloned = pcall(vim.fn.system, {
     "git",
     "clone",
     "--filter=blob:none",
     "https://github.com/folke/lazy.nvim.git",
     "--branch=stable", -- latest stable release
     lazypath,
-  }
+  })
+  if not cloned or vim.v.shell_error ~= 0 or not vim.uv.fs_stat(lazypath .. "/lua/lazy/init.lua") then
+    -- a partial clone would skip this bootstrap on the next start
+    vim.fn.delete(lazypath, "rf")
+    local cause = cloned and string.format("clone failed (git exit %d)", vim.v.shell_error)
+      or "clone failed (git not runnable)"
+    disable_plugins(cause, "an online restart")
+    return
+  end
 end
 vim.opt.rtp:prepend(lazypath)
+
+local lazy_loaded, lazy = pcall(require, "lazy")
+if not lazy_loaded then
+  disable_plugins("not loadable", "you delete " .. lazypath .. " and restart online")
+  return
+end
 
 -- check if firenvim is active
 local firenvim_not_active = function()
@@ -584,7 +606,7 @@ local plugin_specs = {
 }
 
 ---@diagnostic disable-next-line: missing-fields
-require("lazy").setup {
+lazy.setup {
   spec = plugin_specs,
   ui = {
     border = "rounded",

@@ -172,9 +172,12 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
   writes `log/` and `meta/` beside its binary. `up` rewrites every text file under `mason/` that
   names the source data dir (seed or live) to the run's copy, as a new file, so runs never write
   into the seed or the owner's `~/.local/share/nvim`.
-- **`--bare` fails at `require("lazy")`**: the bootstrap `git clone` result is not checked, so
-  E5113 aborts `init.lua` before diagnostics and colorscheme load. That is the expected end state
-  of a fresh machine offline, not a harness fault.
+- **`--bare` starts without plugins, by design**: the lazy bootstrap clone fails (no network),
+  `plugin_specs.lua` warns once (`lazy.nvim clone failed (git exit 128): plugins off until an online
+  restart`) and returns, and the rest of `init.lua` loads with the builtin `habamax` colorscheme (the
+  one run where asserting the name is valid). The warning is not an error: `up` prints nothing and
+  `doctor` says `messages ok`. Any `E\d+:` on a bare start is a regression. `sync` cannot restart a
+  bare run (it waits for fzf-lua): `down`, then `up --bare` again.
 - **The live checkout may lag.** `live` lists the commits it lacks; a `--live` run still drives
   the checkout's config, on live's plugins.
 - **Name clash check**: state lives in `~/.local/state/nvim-config-verify`; no sibling uses it.
