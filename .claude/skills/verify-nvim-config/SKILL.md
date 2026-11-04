@@ -38,6 +38,13 @@ answers on its socket, VimEnter ran and the VeryLazy plugins (fzf-lua) loaded. I
 the run's `XDG_CONFIG_HOME/nvim`. Startup `:messages` go to `evidence/00-up-messages.txt`, and
 errors in them are printed. The start screen is `00-up-screen.txt`.
 
+Every process a run starts gets the run's PATH, recorded as `run_path=` in the run's `meta`:
+nvim's own directory, the directories of `python3`, `node`, `go`, `fzf`, `rg`, `jq`, `ctags` and
+`golangci-lint` (the caller's Go bin, which holds every tool go.nvim runs: `~/.gvm/pkgsets/go1.25.7/global/bin`
+here), then `/usr/local/bin:/usr/bin:/bin`. No other per-user directory, nothing else from the
+caller's PATH. Inside nvim, Mason prepends its `mason/bin` (so Mason's `gofumpt` and `gopls` win)
+and go.nvim appends `$HOME/go/bin` once it loads.
+
 - **seed** (`$VERIFY_HOME/.seed`, 93 plugins, 13 treesitter parsers in `data/nvim/site`, 10 Mason
   packages with `tree-sitter-cli`, 590 MB)
   is the only step that goes online: GitHub (lazy clones), the Mason registry, npm, PyPI and the Go
@@ -53,15 +60,17 @@ errors in them are printed. The start screen is `00-up-screen.txt`.
   of plugin come from the seed instead (so `seed` after changing a spec): one the change adds (not
   in the live dirs yet; live nvim would fetch it online on its next start), listed as
   `filled_from_seed`; and one whose spec **moved** (the seed lock's branch differs from the live
-  lock's, or the seed dir's `origin` url differs from the live dir's, or the seed lock pins a commit
-  the live clone has never fetched: a one-plugin bump written into the seed lock), listed as
+  lock's, or the seed dir's `origin` url differs from the live dir's, or the live checkout does not
+  contain the seed lock's commit (neither HEAD nor an ancestor of it: a one-plugin bump written into
+  the seed lock, even when lazy's update checker already fetched that commit into the live clone), listed as
   `replaced_from_seed`. A replaced plugin also brings its seed lock entry into the run's lock, and
   whatever `PLUGIN_EXTRA_DATA` in `verify.sh` names for it outside `lazy/` (e.g. parsers under
   `site/`). `evidence/00-up-replaced.txt` shows live's and the seed's branch, commit and url.
 
 **Edited the config after `up`?** `$V sync RUN` re-snapshots and restarts nvim in the pane (as
-the owner would, by restarting nvim). tmux config changes need `down` + `up`: the running server
-keeps the config it started with.
+the owner would, by restarting nvim), on the PATH `up` recorded (`run_path=`), whatever the PATH
+of the shell that calls `sync`. tmux config changes need `down` + `up`: the running server keeps
+the config it started with.
 
 ## Doctor
 
@@ -71,6 +80,9 @@ on any FAIL.
 - `tmux` / `netns`: the run's server answers on its own socket and lives in its own network
   namespace (`netns` lists how many processes are inside).
 - `nvim`: answers on `nvim-N.sock` and is ready. `stdpath`: config/data/state/cache are the run's.
+- `path`: nvim's `vim.env.PATH`, minus Mason's prepended `mason/bin` and go.nvim's appended
+  `$HOME/go/bin`, equals the run's `run_path=`. A FAIL means nvim started on another PATH (a
+  caller's PATH leaked in).
 - `code WARN`: the working tree changed since `up`/`sync`. `sync`.
 - `egress`: `curl https://github.com` from inside the namespace fails (exit 6).
 - `clipbrd`: the clipboard provider is `tmux`, i.e. the run's own server buffer.
@@ -184,7 +196,7 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
 - **nvim-treesitter `main`** installs parsers into `data/nvim/site` with Mason's `tree-sitter`
   CLI; the seed installs `tree-sitter-cli` first and removes a `master` checkout's stale
   `parser/`. A one-plugin bump: write the commit into the seed lock with `jq` (keep `branch` and
-  `url`), `seed`, and `--live` replaces that plugin (its commit is unknown to the live clone). See
+  `url`), `seed`, and `--live` replaces that plugin (the live checkout does not contain its commit). See
   features/treesitter.md.
 - **The owner's port**: nothing in this repo listens on TCP, and CLAUDE.md pins no port. nvim
   and tmux use unix sockets under the run dir only (`nvim-N.sock`, a new one per (re)start;

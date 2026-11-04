@@ -1,0 +1,93 @@
+{
+  "branch": "feature/nvim-0-12-clean",
+  "coordinator": "orch-nvim-0-12-clean",
+  "coordinator_session_id": "fb996022-1e9f-4488-a84d-57240eb3a955",
+  "created": "2026-11-04T13:02:16+07:00",
+  "phases": [
+    {
+      "card": null,
+      "commit": "2b75ff0",
+      "depends_on": [],
+      "difficulty": "NORMAL",
+      "n": 1,
+      "note": "sync keeps run_path (env PATH= in start_nvim_cmd), meta run_path=, doctor path ok/FAIL, golangci-lint dir on run_path; go-health before measured pre-sync (base sync leak masks it); 13 env go warnings incl. 3 nvim-dap + 'Not all plugin installed' for phase 4 allow-list; proof: verified-first-pass ~/.local/state/nvim-config-verify/{1104-130537-3002073,1104-130602-3008952,1104-130609-3013951}",
+      "package": "verify skill",
+      "plan": ".workflows/plan/nvim-0-12-clean/phase-1.md",
+      "reported_at": "2026-11-04T13:08:25+07:00",
+      "satisfies": [
+        "R1",
+        "R6"
+      ],
+      "status": "done",
+      "task_id": "P1-NVIM-ZN89",
+      "title": "verify.sh: sync keeps run_path, doctor checks PATH, Go tools on run PATH"
+    },
+    {
+      "card": null,
+      "commit": "63eecb4",
+      "depends_on": [
+        1
+      ],
+      "difficulty": "EASY",
+      "n": 2,
+      "note": "E216 gone (nvim-tree disable_netrw), CursorHold skips <3-col windows, fidget avoid list; :messages keeps only blink client.request deprecation (R2, phase 3); J2 :e . must run last (pre-existing auto_close_win qall); stash replaced by copy-aside; proof: verified-first-pass ~/.local/state/nvim-config-verify/1104-131054-3055370 + 1104-131214-3068043",
+      "package": "lua/",
+      "plan": ".workflows/plan/nvim-0-12-clean/phase-2.md",
+      "reported_at": "2026-11-04T13:21:19+07:00",
+      "satisfies": [
+        "R5",
+        "R3",
+        "R6"
+      ],
+      "status": "done",
+      "task_id": "P1-NVIM-4SP0",
+      "title": "Config-side fixes: E216, CursorHold width, fidget integration"
+    },
+    {
+      "card": null,
+      "commit": "a20fead",
+      "depends_on": [
+        2,
+        1
+      ],
+      "difficulty": "HARD",
+      "n": 3,
+      "note": "blink.cmp v1.10.2 + git-conflict fork 63c5b42, --live rule live_lacks_seed_commit, seed fetches fuzzy lib; A2 narrowed to blink/git-conflict (go.nvim codelens + glance vim.validate -> phase 4); cmdline Tab ^I unchanged per invariant 5; journey recipe fixed (vim.p, separate Escapes); proof: verified-after-fix ~/.local/state/nvim-config-verify/{1104-133718-3342035,1104-133721-3343691,1104-133102-3257898,1104-133105-3259740}",
+      "package": "lua/` + verify skill + seed",
+      "plan": ".workflows/plan/nvim-0-12-clean/phase-3.md",
+      "reported_at": "2026-11-04T13:42:26+07:00",
+      "satisfies": [
+        "R2",
+        "R4"
+      ],
+      "status": "done",
+      "task_id": "P1-NVIM-THTB",
+      "title": "Plugin moves: blink.cmp v1, git-conflict deprecation-free fork"
+    },
+    {
+      "card": null,
+      "commit": "bc60fda",
+      "depends_on": [
+        3
+      ],
+      "difficulty": "NORMAL",
+      "n": 4,
+      "note": "lever phase-4-health.sh seeded+live exit 0 (tc PASS, checkhealth-minus-allow-list 0 with gopls and all loaded, load_all 17/0/0); sweep all features/*.md both modes matched; go codelens+glance validate recorded upstream (F6PG); ^I = config blink cmdline Tab fallback, kept (6CQH); E565 after ct kept, git-conflict.lua unchanged per Decision (R4JW); Deploy D5 fixed: deprecations excludes the 2 upstream lines + CursorHold k/j split (old would roll back); proof: verified-after-fix ~/.local/state/nvim-config-verify/1104-140507-4017271 + 1104-140519-4022631",
+      "package": "verify skill + tmux + `lua/plugin_specs.lua` (render-markdown `opts`)",
+      "plan": ".workflows/plan/nvim-0-12-clean/phase-4.md",
+      "reported_at": "2026-11-04T14:08:00+07:00",
+      "satisfies": [
+        "R6",
+        "R7"
+      ],
+      "status": "done",
+      "task_id": "P1-NVIM-IS7R",
+      "title": "Sweep, tmux true colour, health allow-list, evidence index, Deploy runbook"
+    }
+  ],
+  "plan": "/home/miftah/.worktrees/nvim/nvim-0-12-clean/.workflows/orchestration/nvim-0-12-clean/PLAN.md",
+  "repo": "/home/miftah/.config/nvim",
+  "slug": "nvim-0-12-clean",
+  "updated": "2026-11-04T14:08:00+07:00",
+  "worktree": "/home/miftah/.worktrees/nvim/nvim-0-12-clean"
+}

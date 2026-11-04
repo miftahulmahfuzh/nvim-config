@@ -48,8 +48,9 @@ local plugin_specs = {
   -- auto-completion engine with blink-cmp
   {
     "saghen/blink.cmp",
-    version = "v0.*",
-    build = "cargo build --release",
+    -- v1 release tags: blink downloads the prebuilt fuzzy library for the tag it is on (no cargo;
+    -- v0.14 called the deprecated client.request on nvim 0.12).
+    version = "1.*",
     lazy = false,
     priority = 100,
     dependencies = {
@@ -131,7 +132,9 @@ local plugin_specs = {
     main = "render-markdown",
     name = "render-markdown", -- let's use the same name as the main file for clarity
     ft = "markdown",
-    opts = {}, -- The defaults are sane. Stop over-configuring.
+    -- latex/yaml need parsers config/treesitter.lua does not install (and latex a converter):
+    -- they never rendered, only warned in :checkhealth. Re-enable together with those parsers.
+    opts = { latex = { enabled = false }, yaml = { enabled = false } },
   },
   -- A list of colorscheme plugin you may want to try. Find what suits you.
   { "navarasu/onedark.nvim" },
@@ -381,8 +384,12 @@ local plugin_specs = {
   -- Better git log display
   { "rbong/vim-flog", cmd = { "Flog" } },
   {
-    "akinsho/git-conflict.nvim",
-    version = "*",
+    -- akinsho/git-conflict.nvim's last commit (a1badcd) still calls vim.highlight and vim.validate{},
+    -- both deprecated in nvim 0.12. 63c5b42 is that commit plus only the deprecation fixes; later fork
+    -- commits change behaviour (notify messages, nested repos). A commit, not `version`: the fork
+    -- carries upstream's tags, so `version = "*"` would resolve to the deprecated v2.1.0.
+    "stryukovsky/git-conflict.nvim",
+    commit = "63c5b427038d85b20c32a25c7f3bd502241ce869",
     event = "VeryLazy",
     config = function()
       require("config.git-conflict")

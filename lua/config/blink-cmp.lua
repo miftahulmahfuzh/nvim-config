@@ -1,4 +1,6 @@
 -- /home/miftah/.config/nvim/lua/config/blink-cmp.lua
+-- blink.cmp v1 (spec: version = "1.*"). Every key is checked against v1.10.2's option schema
+-- (lua/blink/cmp/config/*.lua); blink rejects unknown keys at setup.
 
 local lspkind = require("lspkind")
 
@@ -24,7 +26,6 @@ require("blink.cmp").setup({
 		nerd_font_variant = "mono",
 	},
 
-	-- Only show the documentation popup when manually triggered
 	completion = {
 		documentation = {
 			auto_show = true,
@@ -78,12 +79,7 @@ require("blink.cmp").setup({
 		},
 	},
 
-	-- Use Lua implementation to avoid Rust dependency issues
-	-- fuzzy = {
-	-- 	implementation = "lua",
-	-- },
-
-	-- Command line completion
+	-- Command line
 	cmdline = {
 		completion = {
 			menu = {
@@ -95,18 +91,12 @@ require("blink.cmp").setup({
 			["<Tab>"] = { "select_next", "fallback" },
 			["<S-Tab>"] = { "select_prev", "fallback" },
 		},
-		sources = {
-			default = { "cmdline", "path" },
-			providers = {
-				cmdline = {
-					name = "cmdline",
-					module = "blink.cmp.sources.cmdline",
-				},
-				path = {
-					name = "path",
-					module = "blink.cmp.sources.path",
-				},
-			},
-		},
+		-- No blink sources on the command line: it keeps Neovim's own completion (wildmenu), which
+		-- <Tab>/<S-Tab>/<Enter> reach through "fallback". This is what the v0 config did too: it passed
+		-- { default = {...}, providers = {...} } here, a shape blink reads as a list (ipairs), i.e. as
+		-- no sources (`:checkhealth blink.cmp` listed no "Cmdline sources"). Adding "cmdline"/"path"
+		-- would turn on blink's command-line menu, and <Enter> would accept its first item instead of
+		-- running the command.
+		sources = {},
 	},
 })
