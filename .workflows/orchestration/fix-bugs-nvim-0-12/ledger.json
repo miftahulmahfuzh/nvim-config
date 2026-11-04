@@ -57,18 +57,18 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "1e9da8d",
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 4,
-      "note": null,
+      "note": "opencode purged (83dec62 config, 96a6aa1 verify skill, 1e9da8d evidence); run PATH drops <run>/bin, run_path takes no arg; todos.md task bookkeeping skipped per exec rule 4; proof: verified-first-pass .workflows/plan/fix-bugs-nvim-0-12/evidence-phase-4.md",
       "package": "lua/` + verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-4.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T11:24:10+07:00",
       "satisfies": [
         "R8"
       ],
-      "status": "pending",
+      "status": "done",
       "task_id": null,
       "title": "Purge opencode (config + verify fake)"
     },
@@ -176,6 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T11:21:18+07:00",
+  "updated": "2026-11-04T11:24:38+07:00",
+  "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
