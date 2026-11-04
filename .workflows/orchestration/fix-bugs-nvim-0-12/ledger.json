@@ -10,10 +10,10 @@
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 1,
-      "note": "proof: verified-after-fix (base probes re-run; code unchanged); merged by coordinator. Finding: verify.sh sync respawns nvim with caller PATH, not run_path \u2014 out of scope, carried to report",
+      "note": "independently verified (verifier, wave 1-6 @cc43485): verified",
       "package": "lua/` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-1.md",
-      "reported_at": "2026-11-04T11:32:18+07:00",
+      "reported_at": "2026-11-04T11:34:25+07:00",
       "satisfies": [
         "R1"
       ],
@@ -27,10 +27,10 @@
       "depends_on": [],
       "difficulty": "EASY",
       "n": 2,
-      "note": "proof: verified-first-pass; merged into set branch by coordinator",
+      "note": "independently verified (verifier, wave 1-6 @cc43485): verified",
       "package": "after/lsp` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-2.md",
-      "reported_at": "2026-11-04T11:25:49+07:00",
+      "reported_at": "2026-11-04T11:34:25+07:00",
       "satisfies": [
         "R2"
       ],
@@ -44,10 +44,10 @@
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 3,
-      "note": "proof: verified-first-pass; merged into set branch by coordinator",
+      "note": "independently verified (verifier, wave 1-6 @cc43485): verified",
       "package": "lua/config` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-3.md",
-      "reported_at": "2026-11-04T11:25:49+07:00",
+      "reported_at": "2026-11-04T11:34:25+07:00",
       "satisfies": [
         "R6"
       ],
@@ -61,10 +61,10 @@
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 4,
-      "note": "opencode purged (83dec62 config, 96a6aa1 verify skill, 1e9da8d evidence); run PATH drops <run>/bin, run_path takes no arg; todos.md task bookkeeping skipped per exec rule 4; proof: verified-first-pass .workflows/plan/fix-bugs-nvim-0-12/evidence-phase-4.md",
+      "note": "independently verified (verifier, wave 1-6 @cc43485): verified",
       "package": "lua/` + verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-4.md",
-      "reported_at": "2026-11-04T11:24:10+07:00",
+      "reported_at": "2026-11-04T11:34:25+07:00",
       "satisfies": [
         "R8"
       ],
@@ -80,10 +80,10 @@
       ],
       "difficulty": "EASY",
       "n": 5,
-      "note": "proof: verified-first-pass; merged by coordinator",
+      "note": "independently verified (verifier, wave 1-6 @cc43485): verified",
       "package": "verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-5.md",
-      "reported_at": "2026-11-04T11:27:15+07:00",
+      "reported_at": "2026-11-04T11:34:25+07:00",
       "satisfies": [
         "R10"
       ],
@@ -99,10 +99,10 @@
       ],
       "difficulty": "NORMAL",
       "n": 6,
-      "note": "proof: verified-first-pass; ff onto set branch",
+      "note": "independently verified (verifier, wave 1-6 @cc43485): verified",
       "package": "lua/` + verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-6.md",
-      "reported_at": "2026-11-04T11:30:09+07:00",
+      "reported_at": "2026-11-04T11:34:25+07:00",
       "satisfies": [
         "R7"
       ],
@@ -176,7 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T11:32:18+07:00",
+  "updated": "2026-11-04T11:34:25+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
