@@ -162,6 +162,29 @@ records them. Before the fix: `ERROR Failed to run healthcheck for "go" plugin .
 `1104-130404-2996131`). The base's `sync` hides that error, because the caller's leaked PATH has the
 Go bin. Live `1104-130537-3002073`, seeded `1104-130602-3008952`.
 
+### v:errmsg after startup and the directory hijack
+
+nvim-tree used to run `silent! autocmd! FileExplorer *` at load (`hijack_netrw = true`). netrw is off
+before any plugin loads (`globals.lua`), so the group never exists, and `silent!` hid the message but
+left `E216: No such group or event: FileExplorer *` in `v:errmsg`. `config/nvim-tree.lua` now sets
+`disable_netrw = true, hijack_netrw = false`; `hijack_directories` stays on with `disable_netrw`.
+
+```sh
+$V up                                                     # or up --live
+$V lua RUN 'vim.v.errmsg'
+$V keys RUN : e Space . Enter
+$V lua RUN 'vim.inspect({ cwd = vim.fn.getcwd(), wins = vim.tbl_map(function(w) return vim.bo[vim.api.nvim_win_get_buf(w)].filetype end, vim.api.nvim_tabpage_list_wins(0)), msgs = vim.fn.execute("messages") })'
+```
+
+End state seen (0.12.6, seeded `1104-131214-3068043` and `--live` `1104-131054-3055370`): `vim.v.errmsg`
+is `""` (base: `E216: No such group or event: FileExplorer *`). `:e .` leaves one window whose filetype is
+`NvimTree`, cwd `<WORK>`, the same as on the base; `:messages` has no error (until phase 3 of
+nvim-0-12-clean lands, blink.cmp's `client.request is deprecated` appears once a buffer was edited).
+
+Run `:e .` last in a drive: with only an `NvimTree` window left, the next `BufEnter` (e.g.
+`:e sample.lua`) fires `custom-autocmd.lua`'s `auto_close_win`, which runs `qall` and the pane dies
+(`Pane is dead (status 0)`). The base does the same (run `1104-131824-3104731`, `05-screen-after-base.txt`).
+
 ## Gotchas
 
 - gofumpt and stylua are kept by mason-tool-installer alone (`auto_update = true`,

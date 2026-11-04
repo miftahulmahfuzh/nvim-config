@@ -57,7 +57,11 @@ api.nvim_create_autocmd("CursorHold", {
 
 		local cursor_pos = api.nvim_win_get_cursor(0)
 
-		if not vim.deep_equal(cursor_pos, vim.b.diagnostics_pos) then
+		-- float.border = "single" takes one column on each side, and nvim caps the float's width to
+		-- the window's width minus the border: in a window of 2 columns or fewer that leaves no
+		-- column, and nvim_open_win throws "Invalid 'width'". Skip the float there.
+		local fits_float = api.nvim_win_get_width(0) - 2 >= 1
+		if fits_float and not vim.deep_equal(cursor_pos, vim.b.diagnostics_pos) then
 			diagnostic.open_float({ width = 100 })
 		end
 

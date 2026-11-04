@@ -6,7 +6,7 @@
 **Worktree:** `/home/miftah/.worktrees/nvim/nvim-0-12-clean`
 **Branch:** `feature/nvim-0-12-clean` (base: `origin/main` @ `9cea538`; cut at `8bcb55c`, rebased onto `9cea538` fix(startup) ensure_cwd, which touches `lua/custom-autocmd.lua` and `features/startup.md` "Deleted working directory")
 **Phases:** 4 (+ the post-land **Deploy** section, run by the coordinator after it lands the set)
-**Status:** phase 1/4 complete
+**Status:** phase 2/4 complete
 **Coordinator:** —
 
 ---

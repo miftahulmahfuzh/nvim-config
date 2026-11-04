@@ -48,8 +48,11 @@ nvim_tree.setup {
     })
   end,
   auto_reload_on_write = true,
-  disable_netrw = false,
-  hijack_netrw = true,
+  -- netrw is already off (globals.lua sets loaded_netrw before any plugin loads). hijack_netrw would
+  -- run `silent! autocmd! FileExplorer *` against a group that never exists, leaving E216 in
+  -- v:errmsg. disable_netrw keeps hijack_directories (`nvim <dir>`, `:e <dir>`) enabled.
+  disable_netrw = true,
+  hijack_netrw = false,
   hijack_cursor = false,
   hijack_unnamed_buffer_when_opening = false,
   open_on_tab = false,
