@@ -10,48 +10,48 @@
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 1,
-      "note": null,
+      "note": "running in own worktree",
       "package": "lua/` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-1.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T11:26:10+07:00",
       "satisfies": [
         "R1"
       ],
-      "status": "pending",
+      "status": "running",
       "task_id": null,
       "title": "Stylua format-on-save without data loss"
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "3d052bd",
       "depends_on": [],
       "difficulty": "EASY",
       "n": 2,
-      "note": null,
+      "note": "proof: verified-first-pass; merged into set branch by coordinator",
       "package": "after/lsp` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-2.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T11:25:49+07:00",
       "satisfies": [
         "R2"
       ],
-      "status": "pending",
+      "status": "done",
       "task_id": null,
       "title": "pyright starts on Python buffers"
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "baf60b3",
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 3,
-      "note": null,
+      "note": "proof: verified-first-pass; merged into set branch by coordinator",
       "package": "lua/config` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-3.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T11:25:49+07:00",
       "satisfies": [
         "R6"
       ],
-      "status": "pending",
+      "status": "done",
       "task_id": null,
       "title": "Dashboard redraw follows the selection"
     },
@@ -87,7 +87,7 @@
       "satisfies": [
         "R10"
       ],
-      "status": "pending",
+      "status": "spawned",
       "task_id": null,
       "title": "Deploy hint: fetch + merge --ff-only"
     },
@@ -176,7 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T11:24:38+07:00",
+  "updated": "2026-11-04T11:26:10+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
