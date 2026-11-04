@@ -1,0 +1,1 @@
+This is the guide that <C-o> opens from notes.md.

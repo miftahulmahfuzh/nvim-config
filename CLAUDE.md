@@ -10,6 +10,7 @@ This is a cross-platform Neovim configuration using Lua and Lazy.nvim for plugin
 - **Leader Key**: `,`
 - **Config Entry**: `init.lua`
 - **Plugin Specs**: `lua/plugin_specs.lua`
+- **Verify a change**: `.claude/skills/verify-nvim-config` (`scripts/verify.sh up --live` drives the change in a fenced nvim+tmux on a copy of the live `~/.config/nvim` environment; feature map in `features/README.md`)
 
 ## Structure
 
