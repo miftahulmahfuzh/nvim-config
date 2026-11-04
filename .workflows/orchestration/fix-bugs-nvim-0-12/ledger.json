@@ -131,20 +131,20 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "83c234a",
       "depends_on": [
         7
       ],
       "difficulty": "HARD",
       "n": 8,
-      "note": null,
+      "note": "proof: verified-first-pass; ff by coordinator; seed re-seeded @48385e0",
       "package": "lua/` + verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-8.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T11:39:53+07:00",
       "satisfies": [
         "R4"
       ],
-      "status": "pending",
+      "status": "done",
       "task_id": null,
       "title": "hop.nvim \u2192 smoka7 fork, verify learns moved plugins"
     },
@@ -176,7 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T11:35:08+07:00",
+  "updated": "2026-11-04T11:39:53+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
