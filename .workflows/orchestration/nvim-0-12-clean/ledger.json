@@ -1,0 +1,93 @@
+{
+  "branch": "feature/nvim-0-12-clean",
+  "coordinator": "orch-nvim-0-12-clean",
+  "coordinator_session_id": "fb996022-1e9f-4488-a84d-57240eb3a955",
+  "created": "2026-11-04T13:02:16+07:00",
+  "phases": [
+    {
+      "card": null,
+      "commit": null,
+      "depends_on": [],
+      "difficulty": "NORMAL",
+      "n": 1,
+      "note": null,
+      "package": "verify skill",
+      "plan": ".workflows/plan/nvim-0-12-clean/phase-1.md",
+      "reported_at": null,
+      "satisfies": [
+        "R1",
+        "R6"
+      ],
+      "status": "pending",
+      "task_id": null,
+      "title": "verify.sh: sync keeps run_path, doctor checks PATH, Go tools on run PATH"
+    },
+    {
+      "card": null,
+      "commit": null,
+      "depends_on": [
+        1
+      ],
+      "difficulty": "EASY",
+      "n": 2,
+      "note": null,
+      "package": "lua/",
+      "plan": ".workflows/plan/nvim-0-12-clean/phase-2.md",
+      "reported_at": null,
+      "satisfies": [
+        "R5",
+        "R3",
+        "R6"
+      ],
+      "status": "pending",
+      "task_id": null,
+      "title": "Config-side fixes: E216, CursorHold width, fidget integration"
+    },
+    {
+      "card": null,
+      "commit": null,
+      "depends_on": [
+        2,
+        1
+      ],
+      "difficulty": "HARD",
+      "n": 3,
+      "note": null,
+      "package": "lua/` + verify skill + seed",
+      "plan": ".workflows/plan/nvim-0-12-clean/phase-3.md",
+      "reported_at": null,
+      "satisfies": [
+        "R2",
+        "R4"
+      ],
+      "status": "pending",
+      "task_id": null,
+      "title": "Plugin moves: blink.cmp v1, git-conflict deprecation-free fork"
+    },
+    {
+      "card": null,
+      "commit": null,
+      "depends_on": [
+        3
+      ],
+      "difficulty": "NORMAL",
+      "n": 4,
+      "note": null,
+      "package": "verify skill + tmux + `lua/plugin_specs.lua` (render-markdown `opts`)",
+      "plan": ".workflows/plan/nvim-0-12-clean/phase-4.md",
+      "reported_at": null,
+      "satisfies": [
+        "R6",
+        "R7"
+      ],
+      "status": "pending",
+      "task_id": null,
+      "title": "Sweep, tmux true colour, health allow-list, evidence index, Deploy runbook"
+    }
+  ],
+  "plan": "/home/miftah/.worktrees/nvim/nvim-0-12-clean/.workflows/orchestration/nvim-0-12-clean/PLAN.md",
+  "repo": "/home/miftah/.config/nvim",
+  "slug": "nvim-0-12-clean",
+  "updated": "2026-11-04T13:02:16+07:00",
+  "worktree": "/home/miftah/.worktrees/nvim/nvim-0-12-clean"
+}
