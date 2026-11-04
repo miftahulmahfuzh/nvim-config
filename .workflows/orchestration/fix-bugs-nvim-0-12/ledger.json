@@ -112,20 +112,20 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "72c63ff",
       "depends_on": [
         6
       ],
       "difficulty": "EASY",
       "n": 7,
-      "note": null,
+      "note": "proof: verified-first-pass; merged by coordinator",
       "package": "lua/` + verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-7.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T11:35:08+07:00",
       "satisfies": [
         "R5"
       ],
-      "status": "spawned",
+      "status": "done",
       "task_id": null,
       "title": "Drop the per-start gofumpt reinstall"
     },
@@ -176,7 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T11:34:25+07:00",
+  "updated": "2026-11-04T11:35:08+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
