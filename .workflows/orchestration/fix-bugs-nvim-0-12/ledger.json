@@ -6,18 +6,18 @@
   "phases": [
     {
       "card": null,
-      "commit": null,
+      "commit": "f8d2452",
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 1,
-      "note": "running in own worktree",
+      "note": "proof: verified-after-fix (base probes re-run; code unchanged); merged by coordinator. Finding: verify.sh sync respawns nvim with caller PATH, not run_path \u2014 out of scope, carried to report",
       "package": "lua/` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-1.md",
-      "reported_at": "2026-11-04T11:30:09+07:00",
+      "reported_at": "2026-11-04T11:32:18+07:00",
       "satisfies": [
         "R1"
       ],
-      "status": "running",
+      "status": "done",
       "task_id": null,
       "title": "Stylua format-on-save without data loss"
     },
@@ -125,7 +125,7 @@
       "satisfies": [
         "R5"
       ],
-      "status": "pending",
+      "status": "spawned",
       "task_id": null,
       "title": "Drop the per-start gofumpt reinstall"
     },
@@ -176,7 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T11:30:09+07:00",
+  "updated": "2026-11-04T11:32:18+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
