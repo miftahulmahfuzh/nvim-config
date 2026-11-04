@@ -15,7 +15,7 @@ tmux_conf_new_pane_retain_current_path=true
 
 tmux_conf_new_pane_reconnect_ssh=false
 
-tmux_conf_24b_colour=auto
+tmux_conf_24b_colour=true
 
 tmux_conf_theme=enabled
 
