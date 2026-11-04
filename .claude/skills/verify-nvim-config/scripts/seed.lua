@@ -1,7 +1,8 @@
 -- seed.lua: the one online phase. Runs inside `nvim --headless` AFTER the config's init.lua, with
 -- XDG_DATA_HOME pointing at the shared verify seed, never at the owner's ~/.local/share/nvim.
--- Installs/restores every lazy plugin, compiles the treesitter parsers the config ensures, and
--- installs every Mason package the config names. Writes one line per step to $SEED_LOG.
+-- Installs/restores every lazy plugin, installs every Mason package the config names, then
+-- compiles the treesitter parsers the config installs (they need Mason's tree-sitter CLI).
+-- Writes one line per step to $SEED_LOG.
 local log_path = assert(os.getenv("SEED_LOG"), "SEED_LOG unset")
 local update = os.getenv("SEED_UPDATE") == "1"
 local function log(fmt, ...)
@@ -229,49 +230,6 @@ step("seed lock", function()
   log("info seed lock: %d plugins", #names)
 end)
 
-step("treesitter parsers", function()
-  -- The parsers config/treesitter.lua ensures. TSUpdateSync only updates installed ones.
-  local langs = {
-    "python",
-    "http",
-    "cpp",
-    "lua",
-    "vim",
-    "json",
-    "toml",
-    "markdown",
-    "markdown_inline",
-    "html",
-    "css",
-    "javascript",
-    "go",
-  }
-  lazy.load { plugins = { "nvim-treesitter" } }
-  local function missing()
-    local m = {}
-    for _, l in ipairs(langs) do
-      if #vim.api.nvim_get_runtime_file("parser/" .. l .. ".so", false) == 0 then
-        table.insert(m, l)
-      end
-    end
-    return m
-  end
-  -- Only the missing ones: TSInstallSync asks "reinstall? y/n" for an installed parser, and a
-  -- headless nvim waits on that prompt forever.
-  local todo = missing()
-  if #todo > 0 then
-    if vim.fn.exists(":TSInstallSync") == 2 then
-      vim.cmd("TSInstallSync " .. table.concat(todo, " "))
-    else
-      require("nvim-treesitter").install(todo):wait(600000)
-    end
-  end
-  for _, f in ipairs(vim.fn.glob(vim.fn.stdpath("data") .. "/tree-sitter-*", false, true)) do
-    vim.fn.delete(f, "rf")
-  end
-  assert(#missing() == 0, "parsers missing after install: " .. table.concat(missing(), ","))
-end)
-
 -- Mason: the tools mason-tool-installer and mason-lspconfig ensure, installed synchronously.
 -- Nothing else is installing here: this file runs from `-c` before VimEnter (mason-tool-installer's
 -- run_on_start), mason-lspconfig skips ensure_installed in a headless nvim, and the config's own
@@ -285,7 +243,7 @@ step("mason packages", function()
   vim.wait(120000, function()
     return done
   end, 200)
-  local names = { "gofumpt", "stylua" }
+  local names = { "gofumpt", "stylua", "tree-sitter-cli" }
   local ok_map, mapping = pcall(function()
     return require("mason-lspconfig").get_mappings().lspconfig_to_package
   end)
@@ -316,6 +274,61 @@ step("mason packages", function()
   for name in pairs(pending) do
     log("FAIL mason %s: timed out", name)
   end
+end)
+
+-- After the Mason step: nvim-treesitter `main` compiles parsers with the `tree-sitter` CLI, which
+-- Mason just installed (tree-sitter-cli). Parsers and queries go into stdpath("data")/site.
+step("treesitter parsers", function()
+  -- The parsers config/treesitter.lua installs.
+  local langs = {
+    "python",
+    "http",
+    "cpp",
+    "lua",
+    "vim",
+    "json",
+    "toml",
+    "markdown",
+    "markdown_inline",
+    "html",
+    "css",
+    "javascript",
+    "go",
+  }
+  -- Modules required from the checkout this seed just moved away from (`master`) are still
+  -- cached; drop them so the `main` ones load.
+  for name in pairs(package.loaded) do
+    if name == "nvim-treesitter" or name:find("^nvim%-treesitter%.") then
+      package.loaded[name] = nil
+    end
+  end
+  lazy.load { plugins = { "nvim-treesitter" } }
+  assert(pcall(require, "nvim-treesitter.config"), "nvim-treesitter is not on its `main` branch")
+  -- A plugin dir that was on `master` keeps master's untracked build output after the checkout
+  -- to `main`. It is on the runtimepath, so nvim would load those stale parsers.
+  local plugin_dir = require("lazy.core.config").plugins["nvim-treesitter"].dir
+  for _, sub in ipairs { "parser", "parser-info" } do
+    if vim.uv.fs_stat(plugin_dir .. "/" .. sub) then
+      vim.fn.delete(plugin_dir .. "/" .. sub, "rf")
+      log("WARN plugin nvim-treesitter: removed %s/ left over from master", sub)
+    end
+  end
+  assert(vim.fn.executable("tree-sitter") == 1, "no tree-sitter CLI on PATH (Mason tree-sitter-cli)")
+  local ts = require("nvim-treesitter")
+  local function missing()
+    local installed = ts.get_installed("parsers")
+    return vim.tbl_filter(function(l)
+      return not vim.list_contains(installed, l)
+    end, langs)
+  end
+  local todo = missing()
+  if #todo > 0 then
+    ts.install(todo, { summary = true }):wait(600000)
+  end
+  for _, f in ipairs(vim.fn.glob(vim.fn.stdpath("data") .. "/tree-sitter-*", false, true)) do
+    vim.fn.delete(f, "rf")
+  end
+  assert(#missing() == 0, "parsers missing after install: " .. table.concat(missing(), ","))
 end)
 log("done")
 vim.cmd("qa!")

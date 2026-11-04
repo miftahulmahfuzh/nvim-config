@@ -49,7 +49,10 @@ LIVE_TMUX_CONF="$(readlink -f "$HOME/.tmux.conf" 2>/dev/null || echo "$HOME/.tmu
 # Data a plugin keeps outside lazy/<name>, relative to the data dir's nvim/ (e.g. parsers it installs
 # under site/), space-separated per lazy plugin name. When `up --live` replaces that plugin from the
 # seed because its spec moved, each listed path that exists in the seed replaces the run's copy.
-declare -A PLUGIN_EXTRA_DATA=()
+declare -A PLUGIN_EXTRA_DATA=(
+  # nvim-treesitter `main` installs parsers (+ their revision info) and query links under site/.
+  [nvim-treesitter]="site/parser site/parser-info site/queries"
+)
 
 die() { echo "verify: $*" >&2; exit 1; }
 
@@ -248,6 +251,19 @@ repoint_data() {
 # `remote get-url`: that applies the caller's insteadOf rewrites (the owner's turn https into git@).
 origin_url() { git -C "$1" config --get remote.origin.url 2>/dev/null | sed 's#/*$##; s#\.git$##'; }
 
+# True when the seed lock pins plugin $1 to a commit the clone $2 (the run's copy of the live
+# plugin) has never fetched: a plugin bumped on purpose in the seed lock (go.nvim's commit bump).
+# A live clone that is merely newer than the seed already contains the seed's commit and is kept.
+# After `seed --update`, every plugin newer upstream than live qualifies.
+seed_commit_unknown_to_live() {
+  local p=$1 clone=$2 commit
+  commit="$(jq -r --arg p "$p" '.[$p].commit // empty' "$SEED/lazy-lock.json" 2>/dev/null || true)"
+  [ -n "$commit" ] && [ -d "$clone/.git" ] || return 1
+  # In an empty network namespace: lazy's clones are partial (blob:none) and git 2.43 would try to
+  # fetch a missing object from the promisor remote.
+  ! unshare --map-current-user -n git -C "$clone" cat-file -e "$commit^{commit}" 2>/dev/null
+}
+
 # Read-only fingerprint of the owner's live dirs (names, sizes, mtimes; contents are never hashed
 # into anything that could change them). up records it, doctor and down compare.
 live_fingerprint() {
@@ -297,12 +313,14 @@ cmd_up() {
     live)
       # The checkout's update on top of the owner's live environment: the live lock, the live
       # plugins and Mason tools, the live oh-my-tmux. Full copies (never hard links: the owner's
-      # files are writable, so a link would let the run write into them). Only lazy/, mason/ and
+      # files are writable, so a link would let the run write into them). Only lazy/, mason/, site/ and
       # rplugin.vim: the rest of ~/.local/share/nvim (avante/, backup/, telescope_history) is
       # private state a verify run has no use for.
       echo "live_fp=$(live_fingerprint)" >"$dir/live.before"
       cp "$LIVE_CONFIG/lazy-lock.json" "$dir/xdg/config/nvim/lazy-lock.json"
       cp -a "$LIVE_DATA/lazy" "$LIVE_DATA/mason" "$dir/xdg/data/nvim/"
+      # nvim-treesitter `main` keeps parsers and query links in ~/.local/share/nvim/site.
+      [ -d "$LIVE_DATA/site" ] && cp -a "$LIVE_DATA/site" "$dir/xdg/data/nvim/"
       [ -f "$LIVE_DATA/rplugin.vim" ] && cp -a "$LIVE_DATA/rplugin.vim" "$dir/xdg/data/nvim/"
       repoint_data "$dir" "$(dirname "$LIVE_DATA")"
       # Two kinds of plugin come from the verify seed instead, and are said so:
@@ -329,7 +347,7 @@ cmd_up() {
           lb="$(jq -r --arg n "$p" '.[$n].branch // empty' "$lock" 2>/dev/null || true)"
           su="$(origin_url "$SEED/data/nvim/lazy/$p")"
           lu="$(origin_url "$dir/xdg/data/nvim/lazy/$p")"
-          [ "$sb" != "${lb:-$sb}" ] || [ "$su" != "$lu" ] || continue
+          [ "$sb" != "${lb:-$sb}" ] || [ "$su" != "$lu" ] || seed_commit_unknown_to_live "$p" "$dir/xdg/data/nvim/lazy/$p" || continue
           echo "$p: live ${lb:-?}@$(git -C "$dir/xdg/data/nvim/lazy/$p" rev-parse --short HEAD 2>/dev/null) ${lu:-?} -> seed $sb@$(git -C "$SEED/data/nvim/lazy/$p" rev-parse --short HEAD 2>/dev/null) ${su:-?}" \
             >>"$dir/evidence/00-up-replaced.txt"
           rm -rf "$dir/xdg/data/nvim/lazy/$p"
@@ -344,6 +362,9 @@ cmd_up() {
           done
           replaced="$replaced $p"
         done
+        # Links copied from the seed (PLUGIN_EXTRA_DATA, e.g. site/queries/*) point into the seed's
+        # plugin dirs; point them at the run's copies, as seeded mode does.
+        if [ -n "$replaced" ]; then repoint_data "$dir" "$SEED/data"; fi
         flock -u 9
       fi
       [ -f "$REAL_HOME/.cache/nvim/dashboard_ascii_art.txt" ] && cp "$REAL_HOME/.cache/nvim/dashboard_ascii_art.txt" "$dir/xdg/cache/nvim/"
