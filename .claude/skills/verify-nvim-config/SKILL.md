@@ -60,8 +60,9 @@ and go.nvim appends `$HOME/go/bin` once it loads.
   of plugin come from the seed instead (so `seed` after changing a spec): one the change adds (not
   in the live dirs yet; live nvim would fetch it online on its next start), listed as
   `filled_from_seed`; and one whose spec **moved** (the seed lock's branch differs from the live
-  lock's, or the seed dir's `origin` url differs from the live dir's, or the seed lock pins a commit
-  the live clone has never fetched: a one-plugin bump written into the seed lock), listed as
+  lock's, or the seed dir's `origin` url differs from the live dir's, or the live checkout does not
+  contain the seed lock's commit (neither HEAD nor an ancestor of it: a one-plugin bump written into
+  the seed lock, even when lazy's update checker already fetched that commit into the live clone), listed as
   `replaced_from_seed`. A replaced plugin also brings its seed lock entry into the run's lock, and
   whatever `PLUGIN_EXTRA_DATA` in `verify.sh` names for it outside `lazy/` (e.g. parsers under
   `site/`). `evidence/00-up-replaced.txt` shows live's and the seed's branch, commit and url.
@@ -195,7 +196,7 @@ change. Probes for `lua RUN @...` live in `features/lua/`.
 - **nvim-treesitter `main`** installs parsers into `data/nvim/site` with Mason's `tree-sitter`
   CLI; the seed installs `tree-sitter-cli` first and removes a `master` checkout's stale
   `parser/`. A one-plugin bump: write the commit into the seed lock with `jq` (keep `branch` and
-  `url`), `seed`, and `--live` replaces that plugin (its commit is unknown to the live clone). See
+  `url`), `seed`, and `--live` replaces that plugin (the live checkout does not contain its commit). See
   features/treesitter.md.
 - **The owner's port**: nothing in this repo listens on TCP, and CLAUDE.md pins no port. nvim
   and tmux use unix sockets under the run dir only (`nvim-N.sock`, a new one per (re)start;

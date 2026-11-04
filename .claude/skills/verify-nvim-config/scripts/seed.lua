@@ -189,6 +189,48 @@ for _, p in pairs(Config.plugins) do
   end
 end
 
+-- blink.cmp's fuzzy matcher is a prebuilt Rust library that blink downloads at setup for the release
+-- tag it is checked out on: target/release/{libblink_cmp_fuzzy.so, its .sha256, version}. The setup
+-- that ran at this nvim's startup was the code checked out BEFORE the restore above, so a bumped
+-- blink.cmp would keep the old release's library, and every run (no network) would try to download
+-- and fall back to the Lua matcher with a warning. Fetch the library for the checked-out tag here,
+-- with the checked-out code: the seed is the one place with network.
+step("blink.cmp fuzzy library", function()
+  local p = Config.plugins["blink.cmp"]
+  if not (p and vim.uv.fs_stat(p.dir .. "/.git")) then
+    return
+  end
+  local tag, on_tag = git(p.dir, "describe", "--tags", "--exact-match", "HEAD")
+  assert(on_tag, "blink.cmp is not on a release tag, so there is no prebuilt library to fetch: " .. tag)
+  local lib_dir = p.dir .. "/target/release"
+  local have = vim.uv.fs_stat(lib_dir .. "/version") and vim.fn.readfile(lib_dir .. "/version")[1] or nil
+  if have ~= tag then
+    -- New files, never in-place rewrites: the old ones are hard-linked into seeded runs.
+    vim.fn.delete(lib_dir, "rf")
+  end
+  -- Forget the modules (and the Rust library) loaded from the old checkout at startup, so the
+  -- downloader below is the checked-out version's and does not find the old library in memory.
+  for name in pairs(package.loaded) do
+    if name == "blink_cmp_fuzzy" or name == "blink.cmp" or name:find("^blink%.cmp%.") then
+      package.loaded[name] = nil
+    end
+  end
+  local done, result = false, nil
+  require("blink.cmp.fuzzy.download").ensure_downloaded(function(err, implementation)
+    done, result = true, err or implementation
+  end)
+  vim.wait(300000, function()
+    return done
+  end, 200)
+  assert(done, "timed out waiting for blink.cmp's download")
+  assert(result == "rust", "blink.cmp fell back to " .. tostring(result))
+  local got = vim.uv.fs_stat(lib_dir .. "/version") and vim.fn.readfile(lib_dir .. "/version")[1] or nil
+  assert(got == tag, ("version file says %s, the checkout is %s"):format(tostring(got), tag))
+  assert(vim.uv.fs_stat(lib_dir .. "/libblink_cmp_fuzzy.so"), "no libblink_cmp_fuzzy.so after the download")
+  assert(vim.uv.fs_stat(lib_dir .. "/libblink_cmp_fuzzy.so.sha256"), "no libblink_cmp_fuzzy.so.sha256 after the download")
+  log("info blink.cmp fuzzy library %s (%s)", tag, have == tag and "kept" or "downloaded")
+end)
+
 -- The seed lock: what is checked out now, for every plugin lazy knows, with each dir's origin url
 -- so the next seed can tell whether a spec moved since. Not lazy's rewrite (it records GitHub's
 -- default branch for a detached HEAD) and not the old lock (it would undo a moved plugin).

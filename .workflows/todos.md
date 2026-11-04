@@ -2,27 +2,39 @@
 
 ## Active Tasks
 
-- [ ] **P1-NVIM-THTB** Phase 3: Plugin moves: blink.cmp v1, git-conflict deprecation-free fork
-  - **Difficulty**: HARD
-  - **Type**: Update
-  - **Context**: Owns plugin moves: blink.cmp to `version = "1.*"` (drop cargo build) with `lua/config/blink-cmp.lua` on the v1 schema, git-conflict to the `stryukovsky/git-conflict.nvim` fork pinned at a commit, `verify.sh` `live_lacks_seed_commit` rename, seed.lua fuzzy-lib step, new `features/lua/deprecations.lua` probe, seed lock bump, features/git.md and lsp.md docs, evidence-phase-3.md. Exit: no `client.request is deprecated` after completion, `:checkhealth vim.deprecated` 0 warnings, `:checkhealth blink.cmp` shows rust fuzzy lib, keymaps and git-conflict features unchanged, `--live` lists exactly `blink.cmp git-conflict.nvim` in `replaced_from_seed`.
-  - **Status**: open
-  - **Plan Set**: `.workflows/orchestration/nvim-0-12-clean/PLAN.md` (phase 3 of 4)
-  - **Satisfies**: R2 — No `client.request is deprecated` (blink.cmp v0.14 -> v1); R4 — No git-conflict.nvim `vim.highlight` / `vim.validate{}` deprecations
-  - **Depends on**: P1-NVIM-4SP0, P1-NVIM-ZN89
-  - **Plan**: `.workflows/plan/P1-NVIM-THTB.md`
-
 - [ ] **P1-NVIM-IS7R** Phase 4: Sweep, tmux true colour, health allow-list, evidence index, Deploy runbook
   - **Difficulty**: NORMAL
   - **Type**: Update
-  - **Context**: Owns the final sweep: `.tmux.conf.local` true colour, render-markdown `opts` (latex/yaml off) in `lua/plugin_specs.lua`, probes `health_diff/noise/load_all`, `phase-4-health.sh`, features/health.md allow-list, README/live-environment docs, the `evidence.md` index and the Deploy runbook (D0-D6). Exit: `phase-4-health.sh seeded` and `live` exit 0 (true-colour and render-markdown warnings gone, `:checkhealth` empty minus allow-list, `load_all` failed=0 unloaded=0, `v:errmsg` empty), every sweep row matches its end state with `deprecations.lua` = 0, evidence.md has a path in every cell, the Deploy runbook passes `bash -n`.
-  - **Status**: blocked
+  - **Context**: Owns the final sweep: `.tmux.conf.local` true colour, render-markdown `opts` (latex/yaml off) in `lua/plugin_specs.lua`, probes `health_diff/noise/load_all`, `phase-4-health.sh`, features/health.md allow-list, README/live-environment docs, the `evidence.md` index and the Deploy runbook (D0-D6). Exit: `phase-4-health.sh seeded` and `live` exit 0 (true-colour and render-markdown warnings gone, `:checkhealth` empty minus allow-list, `load_all` failed=0 unloaded=0, `v:errmsg` empty), every sweep row matches its end state with `deprecations.lua` = 0, evidence.md has a path in every cell, the Deploy runbook passes `bash -n`. Handoffs from phase 3: go.nvim `codelens.refresh` and glance.nvim `vim.validate{}` deprecations in `:checkhealth vim.deprecated` (were hidden on the base behind blink/git-conflict); cmdline `:e sam<Tab>` leaves a literal `^I` (blink cmdline <Tab> fallback, same on v0.14.2 and v1) as a finding; `features/live-environment.md` old-rule sentence (now `live_lacks_seed_commit`); README Git/LSP rows; `:checkhealth blink.cmp` 'providers disabled' WARNING to the allow-list.
+  - **Status**: open
   - **Plan Set**: `.workflows/orchestration/nvim-0-12-clean/PLAN.md` (phase 4 of 4)
   - **Satisfies**: R6 — Sweep: checkhealth, `:messages` after every journey, every plugin loads, notify history; fix real, record upstream-only; R7 — Unattended land + push, D4-style live changes after land, fast-forward `~/.config/nvim`, final `up --live` + doctor clean, evidence paths per item
   - **Depends on**: P1-NVIM-THTB
   - **Plan**: `.workflows/plan/P1-NVIM-IS7R.md`
 
 ## Completed Tasks
+
+- [x] **P1-NVIM-THTB** Phase 3: Plugin moves: blink.cmp v1, git-conflict deprecation-free fork
+  - **Difficulty**: HARD
+  - **Type**: Update
+  - **Context**: Owns plugin moves: blink.cmp to `version = "1.*"` (drop cargo build) with `lua/config/blink-cmp.lua` on the v1 schema, git-conflict to the `stryukovsky/git-conflict.nvim` fork pinned at a commit, `verify.sh` `live_lacks_seed_commit` rename, seed.lua fuzzy-lib step, new `features/lua/deprecations.lua` probe, seed lock bump, features/git.md and lsp.md docs, evidence-phase-3.md. Exit: no `client.request is deprecated` after completion, `:checkhealth vim.deprecated` 0 warnings, `:checkhealth blink.cmp` shows rust fuzzy lib, keymaps and git-conflict features unchanged, `--live` lists exactly `blink.cmp git-conflict.nvim` in `replaced_from_seed`.
+  - **Status**: completed
+  - **Plan Set**: `.workflows/orchestration/nvim-0-12-clean/PLAN.md` (phase 3 of 4)
+  - **Satisfies**: R2 — No `client.request is deprecated` (blink.cmp v0.14 -> v1); R4 — No git-conflict.nvim `vim.highlight` / `vim.validate{}` deprecations
+  - **Depends on**: P1-NVIM-4SP0, P1-NVIM-ZN89
+  - **Plan**: `.workflows/plan/P1-NVIM-THTB.md`
+  - **Completed**: 2026-11-04 13:40
+  - **Method**: /do
+  - **Files**: .claude/skills/verify-nvim-config/SKILL.md, .claude/skills/verify-nvim-config/scripts/verify.sh, .claude/skills/verify-nvim-config/scripts/seed.lua, .claude/skills/verify-nvim-config/features/lsp.md, .claude/skills/verify-nvim-config/features/git.md, .claude/skills/verify-nvim-config/features/lua/deprecations.lua, lua/plugin_specs.lua, lua/config/blink-cmp.lua, .workflows/plan/nvim-0-12-clean/evidence-phase-3.md
+  - **Drift**:
+    - Plan's lsp.md completion recipe was unmeasured and derailed on v0.14.2 and v1 alike: lua_ls in WORK has no vim library so `vim.` opens no menu, and `Escape Escape` in one keys call leaves insert mode on. Recipe now types `vim.p` and sends each Escape separately + waits for mode n; assertions unchanged.
+    - Plan's expected `:e sam<Tab>` -> `:e sample.lua` was never true: both v0.14.2 and v1 leave `:e sam^I` (blink cmdline <Tab> fallback feeds a non-wildchar Tab). Recorded unchanged.
+    - External state written (invariant 3, phase 3 only): seed lock blink.cmp -> 78336bc, `verify.sh seed` re-run (git-conflict MOVED to stryukovsky@63c5b42, blink fuzzy lib v1.10.2 downloaded); backup at ~/.local/state/nvim-config-verify/seed-lock.before-nvim-0-12-clean-phase-3.json.
+  - **Decided**:
+    - A2 `:checkhealth vim.deprecated` = 'No deprecated functions detected' -> satisfied as 'no blink.cmp / git-conflict.nvim entry'; go.nvim codelens.refresh and glance.nvim vim.validate{} (hidden on the base behind the first-reported names) handed to phase 4 (rung 4: R2/R4 + index Scope 'plugins other than blink.cmp and git-conflict.nvim' out of scope; never widen scope)
+    - Cmdline <Tab> literal ^I kept as is -> no change (rung 1: invariant 5, cmdline completion behaves as before); handed to phase 4 as a finding
+    - Completion journey mechanics rewritten (vim.p, separate Escapes) -> journey fixed, not assertions (rung 2: phase exit criteria need a drivable recipe; same before/after end states measured on live via a d90b730 checkout, run 1104-133804-3361630)
+
 
 - [x] **P1-NVIM-4SP0** Phase 2: Config-side fixes: E216, CursorHold width, fidget integration
   - **Difficulty**: EASY

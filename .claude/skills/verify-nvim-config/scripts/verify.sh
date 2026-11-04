@@ -267,17 +267,21 @@ repoint_data() {
 # `remote get-url`: that applies the caller's insteadOf rewrites (the owner's turn https into git@).
 origin_url() { git -C "$1" config --get remote.origin.url 2>/dev/null | sed 's#/*$##; s#\.git$##'; }
 
-# True when the seed lock pins plugin $1 to a commit the clone $2 (the run's copy of the live
-# plugin) has never fetched: a plugin bumped on purpose in the seed lock (go.nvim's commit bump).
-# A live clone that is merely newer than the seed already contains the seed's commit and is kept.
-# After `seed --update`, every plugin newer upstream than live qualifies.
-seed_commit_unknown_to_live() {
+# True when the seed lock pins plugin $1 to a commit the checkout $2 (the run's copy of the live
+# plugin) does not contain: a plugin bumped on purpose in the seed lock (go.nvim's commit bump,
+# blink.cmp v0.14.2 -> v1.10.2). "Contain" = the seed's commit is HEAD or an ancestor of HEAD, not
+# merely an object in the clone: lazy's update checker fetches upstream commits into the live clone
+# without checking them out (the live blink.cmp clone had v1.10.2's commit while on v0.14.2). A live
+# checkout that is merely newer than the seed contains the seed's commit and is kept. After
+# `seed --update`, every plugin newer upstream than live qualifies.
+live_lacks_seed_commit() {
   local p=$1 clone=$2 commit
   commit="$(jq -r --arg p "$p" '.[$p].commit // empty' "$SEED/lazy-lock.json" 2>/dev/null || true)"
   [ -n "$commit" ] && [ -d "$clone/.git" ] || return 1
   # In an empty network namespace: lazy's clones are partial (blob:none) and git 2.43 would try to
-  # fetch a missing object from the promisor remote.
-  ! unshare --map-current-user -n git -C "$clone" cat-file -e "$commit^{commit}" 2>/dev/null
+  # fetch a missing object from the promisor remote. merge-base exits 1 when the commit is not an
+  # ancestor and 128 when the clone has never fetched it: both mean "lacks".
+  ! unshare --map-current-user -n git -C "$clone" merge-base --is-ancestor "$commit" HEAD 2>/dev/null
 }
 
 # Read-only fingerprint of the owner's live dirs (names, sizes, mtimes; contents are never hashed
@@ -344,7 +348,8 @@ cmd_up() {
       #   on its next start).
       # - replaced: one whose spec MOVED. The seed follows the spec (seed.lua); live keeps the old
       #   one, because lazy never re-targets an installed plugin at startup. Moved = the seed lock's
-      #   branch differs from the live lock's, or the two dirs' origin urls differ. The run's lock
+      #   branch differs from the live lock's, or the two dirs' origin urls differ, or the live
+      #   checkout does not contain the seed lock's commit (live_lacks_seed_commit). The run's lock
       #   takes the seed's entry, and PLUGIN_EXTRA_DATA[name] comes from the seed too.
       if [ -d "$SEED/data/nvim/lazy" ]; then
         command -v jq >/dev/null || die "--live needs jq (to compare the seed lock with the live lock)"
@@ -363,7 +368,7 @@ cmd_up() {
           lb="$(jq -r --arg n "$p" '.[$n].branch // empty' "$lock" 2>/dev/null || true)"
           su="$(origin_url "$SEED/data/nvim/lazy/$p")"
           lu="$(origin_url "$dir/xdg/data/nvim/lazy/$p")"
-          [ "$sb" != "${lb:-$sb}" ] || [ "$su" != "$lu" ] || seed_commit_unknown_to_live "$p" "$dir/xdg/data/nvim/lazy/$p" || continue
+          [ "$sb" != "${lb:-$sb}" ] || [ "$su" != "$lu" ] || live_lacks_seed_commit "$p" "$dir/xdg/data/nvim/lazy/$p" || continue
           echo "$p: live ${lb:-?}@$(git -C "$dir/xdg/data/nvim/lazy/$p" rev-parse --short HEAD 2>/dev/null) ${lu:-?} -> seed $sb@$(git -C "$SEED/data/nvim/lazy/$p" rev-parse --short HEAD 2>/dev/null) ${su:-?}" \
             >>"$dir/evidence/00-up-replaced.txt"
           rm -rf "$dir/xdg/data/nvim/lazy/$p"
