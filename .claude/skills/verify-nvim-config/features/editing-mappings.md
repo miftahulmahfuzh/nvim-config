@@ -46,7 +46,7 @@ $V lua RUN 'vim.api.nvim_win_get_cursor(0)'      # { 1, 0 }
 $V keys RUN f                                    # labels over every word
 $V screen RUN f-hints
 S=$(ls -t "$EVIDENCE"/*-screen-f-hints.txt | head -1)
-L=$(awk '$(NF-1) ~ /^[a-z]o$/ && $NF ~ /2$/ {print substr($(NF-1),1,1)}' "$S")   # the label over `go` (line 3)
+L=$(awk 'NF >= 2 && $(NF-1) ~ /^[a-z]o$/ && $NF ~ /2$/ {print substr($(NF-1),1,1)}' "$S")   # the label over `go` (line 3)
 $V keys RUN "$L"
 $V lua RUN 'vim.api.nvim_win_get_cursor(0)'      # { 3, 0 }
 $V keys RUN F /                                  # `/` occurs once before the cursor: no label, jumps
@@ -57,7 +57,10 @@ $V keys RUN f Escape                             # cancelled: the cursor stays a
 End state seen on the base (`phaazon/hop.nvim@1a1ecea`, seeded, 2026-11-04): after `f` the
 screen shows `eodule xxample.qom/pork` and `to o.v2` (label `t` over `go`); `t` -> `{ 3, 0 }`;
 `F /` -> `{ 1, 18 }`; `f Escape` leaves `{ 1, 18 }`.
-End state seen (`smoka7/hop.nvim@<sha7>`, seeded and `--live`): <fill from the Proof run>.
+End state seen (`smoka7/hop.nvim@6e83486`, seeded and `--live`, 2026-11-04): after `f` the screen
+shows `module example.tom/oork` and `vo x.q2` (label `v` over `go`); `v` -> `{ 3, 0 }`; `F /` ->
+`{ 1, 18 }`; `f Escape` leaves `{ 1, 18 }`; no errors in `:messages`. On `sample.lua`, `f` overlays
+`local M = {}` (`local e = {}`) and `Escape` restores it.
 
 ## Gotchas
 
