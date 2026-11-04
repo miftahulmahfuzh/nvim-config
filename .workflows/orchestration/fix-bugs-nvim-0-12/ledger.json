@@ -13,7 +13,7 @@
       "note": "running in own worktree",
       "package": "lua/` + verify features",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-1.md",
-      "reported_at": "2026-11-04T11:27:16+07:00",
+      "reported_at": "2026-11-04T11:30:09+07:00",
       "satisfies": [
         "R1"
       ],
@@ -93,20 +93,20 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "b837799",
       "depends_on": [
         5
       ],
       "difficulty": "NORMAL",
       "n": 6,
-      "note": null,
+      "note": "proof: verified-first-pass; ff onto set branch",
       "package": "lua/` + verify skill",
       "plan": ".workflows/plan/fix-bugs-nvim-0-12/phase-6.md",
-      "reported_at": null,
+      "reported_at": "2026-11-04T11:30:09+07:00",
       "satisfies": [
         "R7"
       ],
-      "status": "pending",
+      "status": "done",
       "task_id": null,
       "title": "Graceful offline lazy bootstrap"
     },
@@ -176,7 +176,7 @@
   "plan": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12/docs/plans/FIX_BUGS_NVIM_0_12_PLAN.md",
   "repo": "/home/miftah/.config/nvim",
   "slug": "fix-bugs-nvim-0-12",
-  "updated": "2026-11-04T11:27:16+07:00",
+  "updated": "2026-11-04T11:30:09+07:00",
   "verified_at": "2026-11-04T11:24:38+07:00",
   "worktree": "/home/miftah/.worktrees/nvim/fix-bugs-nvim-0-12"
 }
