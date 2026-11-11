@@ -20,6 +20,12 @@ require("fzf-lua").setup({
 	files = {
 		previewer = true,
 	},
+	grep = {
+		-- Search dot-dirs too (.workflows/, .claude/, .github/), but never .git internals.
+		-- .gitignore is still respected. `-e` must stay last: the query follows it.
+		rg_opts = '--hidden -g "!.git" --column --line-number --no-heading --color=always --smart-case '
+			.. "--max-columns=4096 -e",
+	},
 })
 
 -- Standard fzf-lua keymaps. Clean, simple, effective.
