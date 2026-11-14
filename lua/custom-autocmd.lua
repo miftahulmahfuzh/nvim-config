@@ -107,7 +107,12 @@ api.nvim_create_autocmd({ "FocusGained", "CursorHold" }, {
 	group = "auto_read",
 	callback = function()
 		if fn.getcmdwintype() == "" then
-			vim.cmd("checktime")
+			-- The event can fire under textlock (e.g. targets.vim waiting in getchar() inside an
+			-- <expr> mapping), where checktime raises E565. Skip it, the next event retries.
+			local ok, err = pcall(vim.cmd, "checktime")
+			if not ok and not tostring(err):find("E565") then
+				error(err, 0)
+			end
 		end
 	end,
 })
